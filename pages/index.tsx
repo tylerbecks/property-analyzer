@@ -1,6 +1,5 @@
 /** @jsx jsx */
 import { css, jsx } from '@emotion/core';
-import Head from 'next/head';
 
 const container = css`
   align-items: center;
@@ -114,11 +113,6 @@ const logo = css`
 
 const Home: React.FC = () => (
   <div css={container}>
-    <Head>
-      <title>Project Scaffolding</title>
-      <link rel="icon" href="/favicon.ico" />
-    </Head>
-
     <main css={main}>
       <h1 css={title}>
         Welcome to{' '}

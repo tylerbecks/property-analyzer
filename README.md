@@ -26,8 +26,6 @@ In addition, [lint-staged](https://github.com/okonet/lint-staged) and [husky](ht
 
 1. Install Dependencies
 ```bash
-npm i
-# or
 yarn
 ```
 

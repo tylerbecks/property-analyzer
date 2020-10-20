@@ -5,13 +5,14 @@ import { css, Global } from '@emotion/core';
 import LogRocket from 'logrocket';
 import { Provider } from 'next-auth/client';
 import type { AppProps /*, AppContext */ } from 'next/app';
+import Head from 'next/head';
 
 // import App from "next/app";
 import { client } from '../apollo-config';
 import AuthGateway from '../components/auth-gateway';
 import Layout from '../components/layout';
 
-LogRocket.init('mg0tep/scaffolding'); // TODO
+LogRocket.init('mg0tep/property-analyzer-8wicl');
 
 const globalStyles = css`
   html,
@@ -38,6 +39,10 @@ const MyApp: React.FC<AppProps> = ({ Component, pageProps }) => {
   return (
     <>
       <Global styles={globalStyles} />
+      <Head>
+        <title>Property Analyzer</title>
+        <link rel="icon" href="/favicon.ico" />
+      </Head>
 
       <Provider session={pageProps.session}>
         <ApolloProvider client={client}>
