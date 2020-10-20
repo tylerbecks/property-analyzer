@@ -2,6 +2,46 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import NextAuth from 'next-auth';
 import Providers from 'next-auth/providers';
 
+type User = {
+  id: string;
+  name: string;
+  email: string;
+  image: string;
+};
+
+type Session = {
+  user: User;
+};
+
+type Profile = {
+  id: string;
+  email: string;
+  verified_email: boolean;
+  name: string;
+  given_name: string;
+  family_name: string;
+  picture: string;
+  locale: string;
+};
+
+type Token = {
+  name: string;
+  email: string;
+  picture: string;
+  id?: string;
+  iat?: number;
+  exp?: number;
+};
+
+type Account = {
+  provider: string;
+  type: string;
+  id: string;
+  refreshToken?: string;
+  accessToken: string;
+  accessTokenExpires: null;
+};
+
 // For more information on each option (and a full list of options) go to
 // https://next-auth.js.org/configuration/options
 const options = {
@@ -70,10 +110,23 @@ const options = {
   // when an action is performed.
   // https://next-auth.js.org/configuration/callbacks
   callbacks: {
-    // signIn: async (user, account, profile) => { return Promise.resolve(true) },
+    // signIn: async (user, account, profile) => {
+    //   return Promise.resolve(true);
+    // },
     // redirect: async (url, baseUrl) => { return Promise.resolve(baseUrl) },
-    // session: async (session, user) => { return Promise.resolve(session) },
-    // jwt: async (token, user, account, profile, isNewUser) => { return Promise.resolve(token) }
+    // session: async (session, user) => {
+    session: async (session: Session, user: User) => {
+      session.user.id = user.id;
+
+      return Promise.resolve(session);
+    },
+    jwt: async (token: Token, user?: User, account?: Account, profile?: Profile) => {
+      if (profile) {
+        token.id = profile.id;
+      }
+
+      return Promise.resolve(token);
+    },
   },
 
   // Events are useful for logging
