@@ -21,7 +21,7 @@
   "include": [
     "next-env.d.ts",
     "**/*.ts",
-    "**/*.tsx", "jest.config.js", "babel.config.Js"
+    "**/*.tsx", "babel.config.js"
   ],
   "exclude": [
     "node_modules"

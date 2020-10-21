@@ -2,6 +2,9 @@
 import { css, jsx } from '@emotion/core';
 import { Button, Form, Input, InputNumber, Typography } from 'antd';
 
+import { Property } from '../types/property';
+import { formatCurrency } from '../utils/text-formatter';
+
 const { Title } = Typography;
 const TYPE_VALIDATION_TEMPLATE = "'${label}' is not a valid ${type}";
 const LABEL_SPAN = 4;
@@ -17,26 +20,11 @@ const button = css`
   margin-right: 8px;
 `;
 
-export type NewProperty = {
-  address_1: string;
-  address_2: string | undefined;
-  city: string;
-  country: string;
-  name: string;
-  notes: string | undefined;
-  price: number;
-  size: number;
-  state: string;
-  type: string | undefined;
-  url: string | undefined;
-  zip: string;
-};
-
 type Props = {
-  onSubmit: (newProperty: NewProperty) => void;
+  onSubmit: (Property: Property) => void;
 };
 
-const NewPropertyForm: React.FC<Props> = ({ onSubmit }) => {
+const PropertyForm: React.FC<Props> = ({ onSubmit }) => {
   const [form] = Form.useForm();
 
   const onAddressChange = ({ currentTarget: { value } }: React.FormEvent<HTMLInputElement>) => {
@@ -49,8 +37,9 @@ const NewPropertyForm: React.FC<Props> = ({ onSubmit }) => {
     form.resetFields();
   };
 
-  const onFinish = (newProperty: NewProperty) => {
-    onSubmit(newProperty);
+  const onFinish = (Property: Property) => {
+    onSubmit(Property);
+    form.resetFields();
   };
 
   const validateMessages = {
@@ -139,8 +128,8 @@ const NewPropertyForm: React.FC<Props> = ({ onSubmit }) => {
       >
         <InputNumber
           css={inputNumberCss}
-          formatter={(value) => `$ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-          parser={(value: string | undefined) => value.replace(/\$\s?|(,*)/g, '')}
+          formatter={(value) => formatCurrency(String(value))}
+          parser={(value: string | undefined) => (value ? value.replace(/\$\s?|(,*)/g, '') : '')}
         />
       </Form.Item>
 
@@ -178,4 +167,4 @@ const NewPropertyForm: React.FC<Props> = ({ onSubmit }) => {
   );
 };
 
-export default NewPropertyForm;
+export default PropertyForm;

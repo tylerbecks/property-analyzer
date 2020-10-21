@@ -1,42 +1,54 @@
-import { gql, useMutation, useQuery } from '@apollo/client';
+import { gql, useMutation } from '@apollo/client';
 import { useSession } from 'next-auth/client';
+import { useRouter } from 'next/router';
 
-import NewPropertyForm, { NewProperty } from '../components/new-property-form';
-
-// TODO remove
-const PROPERTY = gql`
-  query GetFirstProperty($id: Int!) {
-    properties(where: { id: { _eq: $id } }) {
-      id
-      name
-      price
-      type
-    }
-  }
-`;
+import PropertyForm from '../components/new-property-form';
+import { Property } from '../types/property';
+import { GET_PROPERTIES } from './index';
 
 const ADD_PROPERTY = gql`
   mutation AddProperty($property: properties_insert_input!) {
     insert_properties_one(object: $property) {
-      id
+      address_1
+      address_2
+      city
+      country
+      name
+      notes
+      price
+      size
+      state
+      type
+      url
+      zip
     }
   }
 `;
 
 const FormPage: React.FC = () => {
+  const router = useRouter();
   const [session] = useSession();
+  const [addProperty] = useMutation(ADD_PROPERTY, {
+    update(cache, { data: { insert_properties_one } }) {
+      console.log({ cache, insert_properties_one });
 
-  const property = useQuery(PROPERTY, {
-    variables: { id: 1 },
+      cache.modify({
+        fields: {
+          properties(existingProperties = []) {
+            const newPropertyRef = cache.writeQuery({
+              data: insert_properties_one,
+              query: GET_PROPERTIES,
+            });
+
+            return [...existingProperties, newPropertyRef];
+          },
+        },
+      });
+    },
   });
-  const [addProperty] = useMutation(ADD_PROPERTY);
 
-  if (property.loading) return <p>Loading...</p>;
-  if (property.error) return <p>Error :(</p>;
-
-  console.log({ session });
-  const onSubmit = (newProperty: NewProperty) => {
-    const propertyWithUserId = Object.assign({}, newProperty, {
+  const onSubmit = (Property: Property) => {
+    const propertyWithUserId = Object.assign({}, Property, {
       user_id: session.user.id,
     });
 
@@ -45,9 +57,11 @@ const FormPage: React.FC = () => {
         property: propertyWithUserId,
       },
     });
+
+    router.push('/');
   };
 
-  return <NewPropertyForm onSubmit={onSubmit} />;
+  return <PropertyForm onSubmit={onSubmit} />;
 };
 
 export default FormPage;
