@@ -21,6 +21,7 @@ In addition, [lint-staged](https://github.com/okonet/lint-staged) and [husky](ht
 
 ### Tools
 * [Log Rocket](https://app.logrocket.com/)
+* [Testing Playground Chrome Extension](https://chrome.google.com/webstore/detail/testing-playground/hejbmebodbijjdhflfknehhcgaklhano?hl=en) for grabbing selectors for tests
 
 ## Getting Started
 

@@ -1,7 +1,9 @@
 /** @jsx jsx */
 import { css, jsx } from '@emotion/core';
-import { Button, Spin } from 'antd';
+import { Button } from 'antd';
 import { signIn, useSession } from 'next-auth/client';
+
+import LoadingScreen from './loading-screen';
 
 const container = css`
   display: flex;
@@ -16,11 +18,7 @@ const AuthGateway: React.FC<Props> = ({ Page }: Props) => {
   const [session, loading] = useSession();
 
   if (loading) {
-    return (
-      <main css={container}>
-        <Spin size="large" />
-      </main>
-    );
+    return <LoadingScreen />;
   }
 
   if (!session) {

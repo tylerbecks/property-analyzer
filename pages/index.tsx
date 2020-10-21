@@ -1,171 +1,141 @@
 /** @jsx jsx */
+import { PlusOutlined } from '@ant-design/icons';
+import { gql, useQuery } from '@apollo/client';
 import { css, jsx } from '@emotion/core';
+import { Button, Table } from 'antd';
+import { useSession } from 'next-auth/client';
+import Link from 'next/link';
 
-const container = css`
-  align-items: center;
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  justify-content: center;
-  padding: 0 0.5rem;
+import LoadingScreen from '../components/loading-screen';
+import { Property } from '../types/property';
+import { formatCurrency } from '../utils/text-formatter';
+
+const newPropertyButton = css`
+  margin-bottom: 18px;
+  float: right;
 `;
-const main = css`
-  padding: 5rem 0;
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-`;
-const footer = css`
-  width: 100%;
-  height: 100px;
-  border-top: 1px solid #eaeaea;
-  display: flex;
-  justify-content: center;
-  align-items: center;
 
-  & img {
-    margin-left: 0.5rem;
-  }
-
-  & a {
-    display: flex;
-    justify-content: center;
-    align-items: center;
+export const GET_PROPERTIES = gql`
+  query GetProperties($user_id: String!) {
+    properties(where: { user_id: { _eq: $user_id } }) {
+      address_1
+      address_2
+      city
+      country
+      name
+      notes
+      price
+      size
+      state
+      type
+      url
+      zip
+    }
   }
 `;
-const title = css`
-  font-size: 4rem;
-  line-height: 1.15;
-  margin: 0;
-  text-align: center;
 
-  & a {
-    color: #0070f3;
-    text-decoration: none;
-  }
+const columns = [
+  {
+    title: 'Name',
+    dataIndex: 'name',
+    key: 'name',
+    // eslint-disable-next-line react/display-name
+    render: ({ name, url }: { name: string; url: string }) =>
+      url ? <a href={url}>{name}</a> : name,
+  },
+  {
+    title: 'Address',
+    dataIndex: 'address',
+    key: 'address',
+    // eslint-disable-next-line react/display-name
+    render: ({
+      address1,
+      address2,
+      city,
+      state,
+      zip,
+    }: {
+      address1: string;
+      address2: string;
+      city: string;
+      state: string;
+      zip: string;
+    }) => (
+      <>
+        <div>{address1}</div>
+        {address2 && <div>{address2}</div>}
+        <div>{`${city}, ${state}, ${zip}`}</div>
+      </>
+    ),
+  },
+  {
+    title: 'Price',
+    dataIndex: 'price',
+    key: 'price',
+    render: (price: number) => formatCurrency(String(price)),
+  },
+  {
+    title: 'Size',
+    key: 'size',
+    dataIndex: 'size',
+    render: (size: number) => size.toLocaleString(),
+  },
+  {
+    title: 'Type',
+    key: 'type',
+    dataIndex: 'type',
+  },
+  {
+    title: 'Notes',
+    key: 'notes',
+    dataIndex: 'notes',
+  },
+];
 
-  & a:hover,
-  & a:focus,
-  & a:active {
-    text-decoration: underline;
-  }
-`;
-const description = css`
-  font-size: 1.5rem;
-  line-height: 1.5;
-  text-align: center;
-`;
-const code = css`
-  background: #fafafa;
-  border-radius: 5px;
-  padding: 0.75rem;
-  font-size: 1.1rem;
-  font-family: Menlo, Monaco, Lucida Console, Liberation Mono, DejaVu Sans Mono,
-    Bitstream Vera Sans Mono, Courier New, monospace;
-`;
-const grid = css`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-wrap: wrap;
-  max-width: 800px;
-  margin-top: 3rem;
+const toTableRows = (properties: Property[]) =>
+  properties.map((p, idx) => ({
+    key: idx,
+    name: {
+      name: p.name,
+      url: p.url,
+    },
+    address: {
+      address1: p.address_1,
+      address2: p.address_2,
+      city: p.city,
+      state: p.state,
+      zip: p.zip,
+    },
+    price: p.price,
+    size: p.size,
+    type: p.type,
+    notes: p.notes,
+  }));
 
-  @media (max-width: 600px) {
-    width: 100%;
-    flex-direction: column;
-  }
-`;
-const card = css`
-  margin: 1rem;
-  flex-basis: 45%;
-  padding: 1.5rem;
-  text-align: left;
-  color: inherit;
-  text-decoration: none;
-  border: 1px solid #eaeaea;
-  border-radius: 10px;
-  transition: color 0.15s ease, border-color 0.15s ease;
+const Properties: React.FC = () => {
+  const [session] = useSession();
 
-  &:hover,
-  &:focus,
-  &:active {
-    color: #0070f3;
-    border-color: #0070f3;
-  }
+  const { loading, error, data } = useQuery(GET_PROPERTIES, {
+    variables: { user_id: session.user.id },
+  });
 
-  & h3 {
-    margin: 0 0 1rem 0;
-    font-size: 1.5rem;
-  }
+  if (loading) return <LoadingScreen />;
+  if (error) return <p>Error :(</p>;
 
-  & p {
-    margin: 0;
-    font-size: 1.25rem;
-    line-height: 1.5;
-  }
-`;
-const logo = css`
-  height: 1em;
-`;
+  const tableRows = toTableRows(data.properties);
 
-const Home: React.FC = () => (
-  <div css={container}>
-    <main css={main}>
-      <h1 css={title}>
-        Welcome to{' '}
-        <a target="_blank" rel="noreferrer" href="https://nextjs.org">
-          Next.js!
+  return (
+    <div>
+      <Link href="/form">
+        <a>
+          <Button type="primary" css={newPropertyButton}>
+            <PlusOutlined /> Property
+          </Button>
         </a>
-      </h1>
+      </Link>
+      <Table columns={columns} dataSource={tableRows} />
+    </div>
+  );
+};
 
-      <p css={description}>
-        Get started by editing <code css={code}>pages/index.tsx</code>
-      </p>
-
-      <div css={grid}>
-        <a target="_blank" rel="noreferrer" href="https://nextjs.org/docs" css={card}>
-          <h3>Documentation &rarr;</h3>
-          <p>Find in-depth information about Next.js features and API.</p>
-        </a>
-
-        <a target="_blank" rel="noreferrer" href="https://nextjs.org/learn" css={card}>
-          <h3>Learn &rarr;</h3>
-          <p>Learn about Next.js in an interactive course with quizzes!</p>
-        </a>
-
-        <a
-          target="_blank"
-          rel="noreferrer"
-          href="https://github.com/vercel/next.js/tree/master/examples"
-          css={card}
-        >
-          <h3>Examples &rarr;</h3>
-          <p>Discover and deploy boilerplate example Next.js projects.</p>
-        </a>
-
-        <a
-          href="https://vercel.com/import?filter=next.js&utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-          css={card}
-        >
-          <h3>Deploy &rarr;</h3>
-          <p>Instantly deploy your Next.js site to a public URL with Vercel.</p>
-        </a>
-      </div>
-    </main>
-
-    <footer css={footer}>
-      <a
-        href="https://vercel.com?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-        Powered by <img src="/vercel.svg" alt="Vercel Logo" css={logo} />
-      </a>
-    </footer>
-  </div>
-);
-
-export default Home;
+export default Properties;
