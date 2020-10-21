@@ -3,26 +3,17 @@ import { useSession } from 'next-auth/client';
 import { useRouter } from 'next/router';
 
 import PropertyForm from '../components/new-property-form';
+import { PROPERTY_FRAGMENT } from '../fragments/property';
 import { Property } from '../types/property';
 import { GET_PROPERTIES } from './index';
 
 const ADD_PROPERTY = gql`
   mutation AddProperty($property: properties_insert_input!) {
     insert_properties_one(object: $property) {
-      address_1
-      address_2
-      city
-      country
-      name
-      notes
-      price
-      size
-      state
-      type
-      url
-      zip
+      ...PROPERTY
     }
   }
+  ${PROPERTY_FRAGMENT}
 `;
 
 const FormPage: React.FC = () => {

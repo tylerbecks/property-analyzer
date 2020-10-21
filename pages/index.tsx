@@ -7,6 +7,7 @@ import { useSession } from 'next-auth/client';
 import Link from 'next/link';
 
 import LoadingScreen from '../components/loading-screen';
+import { PROPERTY_FRAGMENT } from '../fragments/property';
 import { Property } from '../types/property';
 import { formatCurrency } from '../utils/text-formatter';
 
@@ -18,20 +19,10 @@ const newPropertyButton = css`
 export const GET_PROPERTIES = gql`
   query GetProperties($user_id: String!) {
     properties(where: { user_id: { _eq: $user_id } }) {
-      address_1
-      address_2
-      city
-      country
-      name
-      notes
-      price
-      size
-      state
-      type
-      url
-      zip
+      ...PROPERTY
     }
   }
+  ${PROPERTY_FRAGMENT}
 `;
 
 const columns = [
@@ -112,7 +103,7 @@ const toTableRows = (properties: Property[]) =>
     notes: p.notes,
   }));
 
-const Properties: React.FC = () => {
+const IndexPage: React.FC = () => {
   const [session] = useSession();
 
   const { loading, error, data } = useQuery(GET_PROPERTIES, {
@@ -138,4 +129,4 @@ const Properties: React.FC = () => {
   );
 };
 
-export default Properties;
+export default IndexPage;
