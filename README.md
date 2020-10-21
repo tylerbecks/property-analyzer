@@ -1,5 +1,8 @@
-## Fork Me!
-This repo is a quick way to start any new project.  It comes configured with the following:
+# Property Analyzer
+[Check it out 🚀](https://property-analyzer.vercel.app/)
+
+
+This project is configured with the following:
 ### Stack
 * [NextJS](https://nextjs.org/docs/getting-started)
 * [TypeScript](https://www.typescriptlang.org/docs)
@@ -22,6 +25,7 @@ In addition, [lint-staged](https://github.com/okonet/lint-staged) and [husky](ht
 ### Tools
 * [Log Rocket](https://app.logrocket.com/)
 * [Testing Playground Chrome Extension](https://chrome.google.com/webstore/detail/testing-playground/hejbmebodbijjdhflfknehhcgaklhano?hl=en) for grabbing selectors for tests
+* [Vercel](https://vercel.com/tylerbecks/property-analyzer)
 
 ## Getting Started
 

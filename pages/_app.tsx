@@ -7,10 +7,10 @@ import { Provider } from 'next-auth/client';
 import type { AppProps /*, AppContext */ } from 'next/app';
 import Head from 'next/head';
 
-// import App from "next/app";
-import { client } from '../apollo-config';
 import AuthGateway from '../components/auth-gateway';
 import Layout from '../components/layout';
+import { client } from '../setup-apollo';
+// import App from "next/app";
 
 LogRocket.init('mg0tep/property-analyzer-8wicl');
 
