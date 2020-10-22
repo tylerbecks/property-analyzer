@@ -1,18 +1,22 @@
+import jwt from 'jsonwebtoken';
 import { NextApiRequest, NextApiResponse } from 'next';
 import NextAuth from 'next-auth';
 import Providers from 'next-auth/providers';
 
+const jwtSecret = JSON.parse(process.env.AUTH_PRIVATE_KEY as string);
+
 type User = {
   id: string;
-  name: string;
   email: string;
   image: string;
+  name: string;
 };
-
 type Session = {
+  id: number;
+  expires: string;
+  token: string;
   user: User;
 };
-
 type Profile = {
   id: string;
   email: string;
@@ -23,7 +27,6 @@ type Profile = {
   picture: string;
   locale: string;
 };
-
 type Token = {
   name: string;
   email: string;
@@ -32,7 +35,6 @@ type Token = {
   iat?: number;
   exp?: number;
 };
-
 type Account = {
   provider: string;
   type: string;
@@ -40,6 +42,12 @@ type Account = {
   refreshToken?: string;
   accessToken: string;
   accessTokenExpires: null;
+};
+type iToken = {
+  id: number;
+  email: string;
+  name: string;
+  picture: string;
 };
 
 // For more information on each option (and a full list of options) go to
@@ -63,7 +71,7 @@ const options = {
   // The secret should be set to a reasonably long random string.
   // It is used to sign cookies and to sign and encrypt JSON Web Tokens, unless
   // a seperate secret is defined explicitly for encrypting the JWT.
-  secret: process.env.SECRET,
+  // secret: process.env.SECRET,
 
   session: {
     // Use JSON Web Tokens for session instead of database sessions.
@@ -90,8 +98,36 @@ const options = {
     // encryption: true,
     // You can define your own encode/decode functions for signing and encryption
     // if you want to override the default behaviour.
-    // encode: async ({ secret, token, maxAge }) => {},
-    // decode: async ({ secret, token, maxAge }) => {},
+    encode: async ({ token }: { token: iToken }) => {
+      const tokenContents = {
+        id: token.id,
+        name: token.name,
+        email: token.email,
+        picture: token.picture,
+        'https://hasura.io/jwt/claims': {
+          'x-hasura-allowed-roles': ['admin', 'user'],
+          'x-hasura-default-role': 'user',
+          'x-hasura-role': 'user',
+          'x-hasura-user-id': token.id,
+        },
+        iat: Date.now() / 1000,
+        exp: Math.floor(Date.now() / 1000) + 24 * 60 * 60 * 30, // 30 days
+        sub: token.id,
+      };
+
+      const encodedToken = jwt.sign(tokenContents, jwtSecret.key, {
+        algorithm: jwtSecret.type,
+      });
+
+      return encodedToken;
+    },
+    decode: async ({ token }: { token: string }) => {
+      const decodedToken = jwt.verify(token, jwtSecret.key, {
+        algorithms: jwtSecret.type,
+      });
+
+      return decodedToken;
+    },
   },
 
   // You can define custom pages to override the built-in pages.
@@ -114,9 +150,13 @@ const options = {
     //   return Promise.resolve(true);
     // },
     // redirect: async (url, baseUrl) => { return Promise.resolve(baseUrl) },
-    // session: async (session, user) => {
     session: async (session: Session, user: User) => {
+      const encodedToken = jwt.sign(user, jwtSecret.key, {
+        algorithm: jwtSecret.type,
+      });
+
       session.user.id = user.id;
+      session.token = encodedToken;
 
       return Promise.resolve(session);
     },

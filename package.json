@@ -12,8 +12,10 @@
   "dependencies": {
     "@apollo/client": "^3.2.4",
     "@emotion/core": "^10.0.35",
+    "@types/jsonwebtoken": "^8.5.0",
     "antd": "^4.7.0",
     "graphql": "^15.3.0",
+    "jsonwebtoken": "^8.5.1",
     "logrocket": "^1.0.14",
     "next": "9.5.4",
     "next-auth": "^3.1.0",
