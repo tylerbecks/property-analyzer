@@ -9,6 +9,7 @@ import Link from 'next/link';
 
 import LoadingScreen from '../components/loading-screen';
 import { PROPERTY_FRAGMENT } from '../fragments/property';
+// import QuickAddButton from '../testing/quick-add-property';
 import { Property } from '../types/property';
 import { formatCurrency } from '../utils/text-formatter';
 
@@ -158,6 +159,8 @@ const IndexPage: React.FC = () => {
 
   return (
     <div>
+      {/* {location.hostname === 'localhost' && <QuickAddButton />} */}
+
       <Link href="/form">
         <a>
           <Button type="primary" css={newPropertyButton}>
