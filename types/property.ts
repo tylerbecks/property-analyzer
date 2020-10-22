@@ -1,4 +1,5 @@
 export type Property = {
+  id: number | undefined;
   address_1: string;
   address_2: string | undefined;
   city: string;

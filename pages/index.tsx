@@ -1,8 +1,9 @@
+/* eslint-disable react/display-name */
 /** @jsx jsx */
-import { PlusOutlined } from '@ant-design/icons';
+import { DeleteOutlined, PlusOutlined } from '@ant-design/icons';
 import { gql, useQuery } from '@apollo/client';
 import { css, jsx } from '@emotion/core';
-import { Button, Table } from 'antd';
+import { Button, Table, Tooltip } from 'antd';
 import { useSession } from 'next-auth/client';
 import Link from 'next/link';
 
@@ -19,6 +20,7 @@ const newPropertyButton = css`
 export const GET_PROPERTIES = gql`
   query GetProperties($user_id: String!) {
     properties(where: { user_id: { _eq: $user_id } }) {
+      id
       ...PROPERTY
     }
   }
@@ -29,7 +31,6 @@ const columns = [
   {
     title: 'Name',
     dataIndex: 'name',
-    key: 'name',
     // eslint-disable-next-line react/display-name
     render: ({ name, url }: { name: string; url: string }) =>
       url ? <a href={url}>{name}</a> : name,
@@ -37,7 +38,6 @@ const columns = [
   {
     title: 'Address',
     dataIndex: 'address',
-    key: 'address',
     // eslint-disable-next-line react/display-name
     render: ({
       address1,
@@ -62,24 +62,34 @@ const columns = [
   {
     title: 'Price',
     dataIndex: 'price',
-    key: 'price',
     render: (price: number) => formatCurrency(String(price)),
   },
   {
     title: 'Size',
-    key: 'size',
     dataIndex: 'size',
     render: (size: number) => size.toLocaleString(),
   },
   {
     title: 'Type',
-    key: 'type',
     dataIndex: 'type',
   },
   {
     title: 'Notes',
-    key: 'notes',
     dataIndex: 'notes',
+  },
+  {
+    title: '',
+    dataIndex: 'delete',
+    render: (id: number) => (
+      <Tooltip title="delete">
+        <Button
+          type="text"
+          danger
+          shape="circle"
+          icon={<DeleteOutlined style={{ fontSize: '18px' }} />}
+        />
+      </Tooltip>
+    ),
   },
 ];
 
@@ -101,6 +111,7 @@ const toTableRows = (properties: Property[]) =>
     size: p.size,
     type: p.type,
     notes: p.notes,
+    delete: p.id,
   }));
 
 const IndexPage: React.FC = () => {
