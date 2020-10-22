@@ -1,15 +1,14 @@
 import 'antd/dist/antd.css';
 
-import { ApolloProvider } from '@apollo/client';
 import { css, Global } from '@emotion/core';
 import LogRocket from 'logrocket';
-import { Provider } from 'next-auth/client';
+import { Provider as NextAuthProvider } from 'next-auth/client';
 import type { AppProps /*, AppContext */ } from 'next/app';
 import Head from 'next/head';
 
 import AuthGateway from '../components/auth-gateway';
 import Layout from '../components/layout';
-import { client } from '../setup-apollo';
+
 // import App from "next/app";
 
 LogRocket.init('mg0tep/property-analyzer-8wicl');
@@ -34,8 +33,6 @@ const globalStyles = css`
 `;
 
 const MyApp: React.FC<AppProps> = ({ Component, pageProps }) => {
-  // Use the <Provider> to improve performance and allow components that call
-  // `useSession()` anywhere in your application to access the `session` object.
   return (
     <>
       <Global styles={globalStyles} />
@@ -44,17 +41,15 @@ const MyApp: React.FC<AppProps> = ({ Component, pageProps }) => {
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      <Provider session={pageProps.session}>
-        <ApolloProvider client={client}>
-          <AuthGateway
-            Page={
-              <Layout>
-                <Component {...pageProps} />
-              </Layout>
-            }
-          />
-        </ApolloProvider>
-      </Provider>
+      <NextAuthProvider session={pageProps.session}>
+        <AuthGateway
+          Page={
+            <Layout>
+              <Component {...pageProps} />
+            </Layout>
+          }
+        />
+      </NextAuthProvider>
     </>
   );
 };

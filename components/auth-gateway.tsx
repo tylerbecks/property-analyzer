@@ -1,8 +1,10 @@
 /** @jsx jsx */
+import { ApolloProvider } from '@apollo/client';
 import { css, jsx } from '@emotion/core';
 import { Button } from 'antd';
 import { signIn, useSession } from 'next-auth/client';
 
+import { createApolloClient } from '../setup-apollo';
 import LoadingScreen from './loading-screen';
 
 const container = css`
@@ -31,7 +33,9 @@ const AuthGateway: React.FC<Props> = ({ Page }: Props) => {
     );
   }
 
-  return <>{Page}</>;
+  const client = createApolloClient({ authorization: `Bearer ${session.token}` });
+
+  return <ApolloProvider client={client}>{Page}</ApolloProvider>;
 };
 
 export default AuthGateway;

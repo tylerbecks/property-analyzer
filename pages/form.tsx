@@ -21,8 +21,6 @@ const FormPage: React.FC = () => {
   const [session] = useSession();
   const [addProperty] = useMutation(ADD_PROPERTY, {
     update(cache, { data: { insert_properties_one } }) {
-      console.log({ cache, insert_properties_one });
-
       cache.modify({
         fields: {
           properties(existingProperties = []) {
