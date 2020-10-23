@@ -5,7 +5,6 @@ import { useRouter } from 'next/router';
 import PropertyForm from '../components/new-property-form';
 import { PROPERTY_FRAGMENT } from '../fragments/property';
 import { Property } from '../types/property';
-import { GET_PROPERTIES } from './index';
 
 const ADD_PROPERTY = gql`
   mutation AddProperty($property: properties_insert_input!) {
@@ -19,25 +18,10 @@ const ADD_PROPERTY = gql`
 const FormPage: React.FC = () => {
   const router = useRouter();
   const [session] = useSession();
-  const [addProperty] = useMutation(ADD_PROPERTY, {
-    update(cache, { data: { insert_properties_one } }) {
-      cache.modify({
-        fields: {
-          properties(existingProperties = []) {
-            const newPropertyRef = cache.writeQuery({
-              data: insert_properties_one,
-              query: GET_PROPERTIES,
-            });
+  const [addProperty] = useMutation(ADD_PROPERTY);
 
-            return [...existingProperties, newPropertyRef];
-          },
-        },
-      });
-    },
-  });
-
-  const onSubmit = (Property: Property) => {
-    const propertyWithUserId = Object.assign({}, Property, {
+  const onSubmit = (property: Property) => {
+    const propertyWithUserId = Object.assign({}, property, {
       user_id: session.user.id,
     });
 
