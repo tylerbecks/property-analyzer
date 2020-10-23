@@ -1,7 +1,7 @@
 /* eslint-disable react/display-name */
 /** @jsx jsx */
 import { DeleteOutlined, PlusOutlined } from '@ant-design/icons';
-import { gql, useMutation, useQuery } from '@apollo/client';
+import { gql, Reference, useMutation, useQuery } from '@apollo/client';
 import { css, jsx } from '@emotion/core';
 import { Button, Table, Tooltip } from 'antd';
 import { useSession } from 'next-auth/client';
@@ -82,7 +82,7 @@ const IndexPage: React.FC = () => {
               }
 
               return existingPropertyRefs.filter(
-                (propertyRef: string) => readField('id', propertyRef) !== deletedProperty.id // TODO add Type for propertyRef
+                (propertyRef: Reference) => readField('id', propertyRef) !== deletedProperty.id // TODO add Type for propertyRef
               );
             },
           },
