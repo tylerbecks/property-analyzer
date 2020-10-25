@@ -14,7 +14,9 @@ const container = css`
   height: 100vh;
 `;
 
-type Props = { Page: React.ReactNode };
+interface Props {
+  Page: React.ReactNode;
+}
 
 const AuthGateway: React.FC<Props> = ({ Page }: Props) => {
   const [session, loading] = useSession();

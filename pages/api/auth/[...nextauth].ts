@@ -5,19 +5,19 @@ import Providers from 'next-auth/providers';
 
 const jwtSecret = JSON.parse(process.env.AUTH_PRIVATE_KEY as string);
 
-type User = {
+interface User {
   id: string;
   email: string;
   image: string;
   name: string;
-};
-type Session = {
+}
+interface Session {
   id: number;
   expires: string;
   token: string;
   user: User;
-};
-type Profile = {
+}
+interface Profile {
   id: string;
   email: string;
   verified_email: boolean;
@@ -26,29 +26,29 @@ type Profile = {
   family_name: string;
   picture: string;
   locale: string;
-};
-type Token = {
+}
+interface Token {
   name: string;
   email: string;
   picture: string;
   id?: string;
   iat?: number;
   exp?: number;
-};
-type Account = {
+}
+interface Account {
   provider: string;
   type: string;
   id: string;
   refreshToken?: string;
   accessToken: string;
   accessTokenExpires: null;
-};
-type iToken = {
+}
+interface iToken {
   id: number;
   email: string;
   name: string;
   picture: string;
-};
+}
 
 // For more information on each option (and a full list of options) go to
 // https://next-auth.js.org/configuration/options
