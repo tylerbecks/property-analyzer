@@ -71,12 +71,10 @@ const IndexPage: React.FC = () => {
   const handleDelete = (id: number) => {
     deletePropertyMutation({
       variables: { id },
-      optimisticResponse: true,
       update: (cache, { data: { delete_properties_by_pk: deletedProperty } }) => {
         cache.modify({
           fields: {
             properties(existingPropertyRefs = [], { readField }) {
-              // TODO figure out why update is called twice
               if (!deletedProperty) {
                 return existingPropertyRefs;
               }

@@ -1,8 +1,9 @@
 import { MockedProvider } from '@apollo/client/testing';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import IndexPage, { DELETE_PROPERTY, GET_PROPERTIES } from '../pages/index';
+import { waitForResponse } from '../testing_utils';
 
 jest.mock('next-auth/client', () => ({
   useSession: () => [{ user: { id: 123 } }],
@@ -24,6 +25,7 @@ const mockProperties = [
     type: 'Apartment',
     url: null,
     zip: 78702,
+    __typename: 'properties',
   },
   {
     id: 2,
@@ -40,6 +42,7 @@ const mockProperties = [
     type: 'Apartment',
     url: null,
     zip: 78702,
+    __typename: 'properties',
   },
 ];
 
@@ -62,7 +65,7 @@ const mocks = [
     },
     result: {
       data: {
-        properties: { id: 1 },
+        delete_properties_by_pk: { id: 1, __typename: 'properties' },
       },
     },
   },
@@ -85,26 +88,25 @@ describe('IndexPage', () => {
     ];
 
     render(
-      <MockedProvider mocks={emptyMockedData} addTypename={false}>
+      <MockedProvider mocks={emptyMockedData}>
         <IndexPage />
       </MockedProvider>
     );
 
-    await waitFor(() => new Promise((resolve) => setTimeout(resolve, 0))); // wait for response
+    await waitForResponse();
 
     const noData = screen.getByRole('cell', { name: /no data/i });
     expect(noData).toBeInTheDocument();
   });
 
-  // TODO fix tests with fragments
-  it.skip('renders the address cell of the first property returned from the api', async function () {
+  it('renders the address cell of the first property returned from the api', async function () {
     render(
-      <MockedProvider mocks={mocks} addTypename={false}>
+      <MockedProvider mocks={mocks}>
         <IndexPage />
       </MockedProvider>
     );
 
-    await waitFor(() => new Promise((resolve) => setTimeout(resolve, 0))); // wait for response
+    await waitForResponse();
 
     const addressCell = screen.getByRole('cell', {
       name: /123 foobar st unit 420 austin, tx, 78702/i,
@@ -112,23 +114,22 @@ describe('IndexPage', () => {
     expect(addressCell).toBeInTheDocument();
   });
 
-  // TODO fix tests with fragments
-  it.skip('deletes a property', async function () {
+  it('deletes a property', async function () {
     render(
-      <MockedProvider mocks={mocks} addTypename={false}>
+      <MockedProvider mocks={mocks}>
         <IndexPage />
       </MockedProvider>
     );
 
-    await waitFor(() => new Promise((resolve) => setTimeout(resolve, 0))); // wait for response
+    await waitForResponse();
 
     const deleteButtons = screen.getAllByRole('button', { name: /delete/i });
 
     userEvent.click(deleteButtons[0]);
 
-    await waitFor(() => new Promise((resolve) => setTimeout(resolve, 0))); // wait for response
+    await waitForResponse();
 
-    const addressCell = screen.getByRole('cell', {
+    const addressCell = screen.queryByRole('cell', {
       name: /123 foobar st unit 420 austin, tx, 78702/i,
     });
     expect(addressCell).not.toBeInTheDocument();
