@@ -7,9 +7,9 @@ import { Button, Table, Tooltip } from 'antd';
 import { useSession } from 'next-auth/client';
 import Link from 'next/link';
 
+// import QuickAddButton from '../components/_convenience/quick-add-property';
 import LoadingScreen from '../components/loading-screen';
 import { PROPERTY_FRAGMENT } from '../fragments/property';
-// import QuickAddButton from '../testing/quick-add-property';
 import { Property } from '../types/property';
 import { formatCurrency } from '../utils/text-formatter';
 
@@ -159,7 +159,7 @@ const IndexPage: React.FC = () => {
 
   return (
     <div>
-      {/* {location.hostname === 'localhost' && <QuickAddButton />} */}
+      {/* <QuickAddButton /> */}
 
       <Link href="/form">
         <a>

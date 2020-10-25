@@ -3,8 +3,9 @@ import { gql, useMutation } from '@apollo/client';
 import { Button } from 'antd';
 import { useSession } from 'next-auth/client';
 
-import { PROPERTY_FRAGMENT } from '../fragments/property';
-import { GET_PROPERTIES } from '../pages/index';
+import { PROPERTY_FRAGMENT } from '../../fragments/property';
+import { GET_PROPERTIES } from '../../pages/index';
+import { Property } from '../../types/property';
 
 const ADD_PROPERTY = gql`
   mutation AddProperty($property: properties_insert_input!) {
@@ -24,15 +25,17 @@ const QuickAddButton: React.FC = () => {
   const [session] = useSession();
   const [addProperty] = useMutation(ADD_PROPERTY, {
     update(cache, { data: { insert_properties_one } }) {
-      const { properties: existingProperties } = cache.readQuery({
+      const data = cache.readQuery({
         query: GET_PROPERTIES,
         variables: { userId: session.user.id },
-      });
+      }) as { properties: Array<Property> };
 
       cache.writeQuery({
         query: GET_PROPERTIES,
         variables: { userId: session.user.id },
-        data: { properties: [...existingProperties, insert_properties_one] },
+        data: {
+          properties: [...data.properties, insert_properties_one],
+        },
       });
     },
   });
