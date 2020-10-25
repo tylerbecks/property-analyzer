@@ -20,9 +20,9 @@ const button = css`
   margin-right: 8px;
 `;
 
-type Props = {
+interface Props {
   onSubmit: (Property: Property) => void;
-};
+}
 
 const PropertyForm: React.FC<Props> = ({ onSubmit }) => {
   const [form] = Form.useForm();
