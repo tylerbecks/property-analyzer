@@ -7,6 +7,7 @@ import { Button, Table, Tooltip } from 'antd';
 import { useSession } from 'next-auth/client';
 import Link from 'next/link';
 
+// import QuickAddButton from '../components/_convenience/quick-add-property';
 import LoadingScreen from '../components/loading-screen';
 import { PROPERTY_FRAGMENT } from '../fragments/property';
 import { Property } from '../types/property';
@@ -158,6 +159,8 @@ const IndexPage: React.FC = () => {
 
   return (
     <div>
+      {/* <QuickAddButton /> */}
+
       <Link href="/form">
         <a>
           <Button type="primary" css={newPropertyButton}>
