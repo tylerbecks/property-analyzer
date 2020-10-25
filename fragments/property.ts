@@ -8,7 +8,7 @@ export const PROPERTY_FRAGMENT = gql`
     country
     name
     notes
-    pricew
+    price
     size
     state
     type
