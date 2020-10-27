@@ -6,28 +6,28 @@ import { Button } from 'antd';
 import { useSession } from 'next-auth/client';
 import Link from 'next/link';
 
-// import QuickAddButton from '../components/_convenience/quick-add-property';
+// import QuickAddHouse from '../components/_convenience/quick-add-house';
 import HousesTable from '../components/houses-table';
 import LoadingScreen from '../components/loading-screen';
-import { PROPERTY_FRAGMENT } from '../fragments/property';
+import { HOUSE_FRAGMENT } from '../fragments/house';
 
-const newPropertyButton = css`
+const newHouseButton = css`
   margin-bottom: 18px;
   float: right;
 `;
 
-export const GET_PROPERTIES = gql`
-  query GetProperties($userId: String!) {
-    properties(where: { user_id: { _eq: $userId } }) {
-      ...Property
+export const GET_HOUSES = gql`
+  query GetHouses($userId: String!) {
+    houses(where: { userId: { _eq: $userId } }) {
+      ...House
     }
   }
-  ${PROPERTY_FRAGMENT}
+  ${HOUSE_FRAGMENT}
 `;
 
 const IndexPage: React.FC = () => {
   const [session] = useSession();
-  const { loading, error, data } = useQuery(GET_PROPERTIES, {
+  const { loading, error, data } = useQuery(GET_HOUSES, {
     variables: { userId: session.user.id },
   });
 
@@ -36,16 +36,16 @@ const IndexPage: React.FC = () => {
 
   return (
     <div>
-      {/* <QuickAddButton /> */}
+      {/* <QuickAddHouse /> */}
       <Link href="/form">
         <a>
-          <Button type="primary" css={newPropertyButton}>
+          <Button type="primary" css={newHouseButton}>
             <PlusOutlined /> Property
           </Button>
         </a>
       </Link>
 
-      <HousesTable properties={data.properties} />
+      <HousesTable houses={data.houses} />
     </div>
   );
 };

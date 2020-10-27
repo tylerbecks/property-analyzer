@@ -2,39 +2,35 @@ import { gql, useMutation } from '@apollo/client';
 import { useSession } from 'next-auth/client';
 import { useRouter } from 'next/router';
 
-import PropertyForm from '../components/new-property-form';
-import { UNSAVED_PROPERTY_FRAGMENT } from '../fragments/property';
-import { UnsavedProperty } from '../types/property';
+import NewHouseForm from '../components/new-house-form';
+import { UNSAVED_HOUSE_FRAGMENT } from '../fragments/house';
+import { UnsavedHouse } from '../types/house';
 
-const ADD_PROPERTY = gql`
-  mutation AddProperty($property: properties_insert_input!) {
-    insert_properties_one(object: $property) {
-      ...UnsavedProperty
+const ADD_HOUSE = gql`
+  mutation AddHouse($house: houses_insert_input!) {
+    insert_houses_one(object: $house) {
+      ...UnsavedHouse
     }
   }
-  ${UNSAVED_PROPERTY_FRAGMENT}
+  ${UNSAVED_HOUSE_FRAGMENT}
 `;
 
 const FormPage: React.FC = () => {
   const router = useRouter();
   const [session] = useSession();
-  const [addProperty] = useMutation(ADD_PROPERTY);
+  const [addHouse] = useMutation(ADD_HOUSE);
 
-  const onSubmit = (property: UnsavedProperty) => {
-    const propertyWithUserId = Object.assign({}, property, {
-      user_id: session.user.id,
-    });
-
-    addProperty({
+  const onSubmit = (house: UnsavedHouse) => {
+    addHouse({
       variables: {
-        property: propertyWithUserId,
+        house: { ...house, userId: session.user.id },
       },
     });
 
     router.push('/');
   };
 
-  return <PropertyForm onSubmit={onSubmit} />;
+  return <NewHouseForm onSubmit={onSubmit} />;
 };
 
 export default FormPage;

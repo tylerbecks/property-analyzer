@@ -1,12 +1,12 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import PropertyForm from '../new-property-form';
+import NewHouseForm from '../new-house-form';
 
-describe('NewPropertyForm', () => {
+describe('NewHouseForm', () => {
   test('fills out Name field with Street Address 1', () => {
     const onSubmit = jest.fn();
-    render(<PropertyForm onSubmit={onSubmit} />);
+    render(<NewHouseForm onSubmit={onSubmit} />);
     const streetAddress1Input = screen.getByRole('textbox', { name: /street address 1/i });
     const nameInput = screen.getByRole('textbox', { name: /name/i });
 

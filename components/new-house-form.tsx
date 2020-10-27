@@ -2,7 +2,7 @@
 import { css, jsx } from '@emotion/core';
 import { Button, Form, Input, InputNumber, Typography } from 'antd';
 
-import { UnsavedProperty } from '../types/property';
+import { UnsavedHouse } from '../types/house';
 import { formatCurrency } from '../utils/text-formatter';
 
 const { Title } = Typography;
@@ -21,10 +21,10 @@ const button = css`
 `;
 
 interface Props {
-  onSubmit: (Property: UnsavedProperty) => void;
+  onSubmit: (house: UnsavedHouse) => void;
 }
 
-const PropertyForm: React.FC<Props> = ({ onSubmit }) => {
+const HouseForm: React.FC<Props> = ({ onSubmit }) => {
   const [form] = Form.useForm();
 
   const onAddressChange = ({ currentTarget: { value } }: React.FormEvent<HTMLInputElement>) => {
@@ -37,8 +37,8 @@ const PropertyForm: React.FC<Props> = ({ onSubmit }) => {
     form.resetFields();
   };
 
-  const onFinish = (Property: UnsavedProperty) => {
-    onSubmit(Property);
+  const onFinish = (house: UnsavedHouse) => {
+    onSubmit(house);
     form.resetFields();
   };
 
@@ -65,17 +65,17 @@ const PropertyForm: React.FC<Props> = ({ onSubmit }) => {
     <Form
       {...layout}
       form={form}
-      name="new-property"
+      name="new-house"
       onFinish={onFinish}
       colon={false}
       validateMessages={validateMessages}
     >
       <Title level={3}>Add new property</Title>
-      <Form.Item name="address_1" label="Street Address 1" rules={[{ required: true }]}>
+      <Form.Item name="address1" label="Street Address 1" rules={[{ required: true }]}>
         <Input allowClear onChange={onAddressChange} />
       </Form.Item>
 
-      <Form.Item name="address_2" label="Street Address 2">
+      <Form.Item name="address2" label="Street Address 2">
         <Input allowClear />
       </Form.Item>
 
@@ -167,4 +167,4 @@ const PropertyForm: React.FC<Props> = ({ onSubmit }) => {
   );
 };
 
-export default PropertyForm;
+export default HouseForm;
