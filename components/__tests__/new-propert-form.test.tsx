@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 
 import PropertyForm from '../new-property-form';
 
-describe('Index', () => {
+describe('NewPropertyForm', () => {
   test('fills out Name field with Street Address 1', () => {
     const onSubmit = jest.fn();
     render(<PropertyForm onSubmit={onSubmit} />);

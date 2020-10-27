@@ -2,7 +2,7 @@
 import { css, jsx } from '@emotion/core';
 import { Button, Form, Input, InputNumber, Typography } from 'antd';
 
-import { Property } from '../types/property';
+import { UnsavedProperty } from '../types/property';
 import { formatCurrency } from '../utils/text-formatter';
 
 const { Title } = Typography;
@@ -21,7 +21,7 @@ const button = css`
 `;
 
 interface Props {
-  onSubmit: (Property: Property) => void;
+  onSubmit: (Property: UnsavedProperty) => void;
 }
 
 const PropertyForm: React.FC<Props> = ({ onSubmit }) => {
@@ -37,7 +37,7 @@ const PropertyForm: React.FC<Props> = ({ onSubmit }) => {
     form.resetFields();
   };
 
-  const onFinish = (Property: Property) => {
+  const onFinish = (Property: UnsavedProperty) => {
     onSubmit(Property);
     form.resetFields();
   };
