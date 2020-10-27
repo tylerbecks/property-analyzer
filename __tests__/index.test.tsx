@@ -3,19 +3,19 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { DELETE_HOUSE, UPDATE_HOUSE } from '../components/houses-table';
-import IndexPage, { GET_PROPERTIES } from '../pages/index';
+import IndexPage, { GET_HOUSES } from '../pages/index';
 import { waitForResponse } from '../testing_utils';
 
 jest.mock('next-auth/client', () => ({
   useSession: () => [{ user: { id: 123 } }],
 }));
 
-const mockProperties = [
+const mockHouses = [
   {
     id: 1,
-    user_id: 123,
-    address_1: '123 Foobar St',
-    address_2: 'Unit 420',
+    userId: 123,
+    address1: '123 Foobar St',
+    address2: 'Unit 420',
     city: 'Austin',
     country: 'United States',
     name: '123 Foobar St',
@@ -26,13 +26,13 @@ const mockProperties = [
     type: 'Apartment',
     url: null,
     zip: 78702,
-    __typename: 'properties',
+    __typename: 'houses',
   },
   {
     id: 2,
-    user_id: 123,
-    address_1: '456 Baz St',
-    address_2: null,
+    userId: 123,
+    address1: '456 Baz St',
+    address2: null,
     city: 'LA',
     country: 'USA',
     name: '456 Baz St',
@@ -43,19 +43,19 @@ const mockProperties = [
     type: 'Apartment',
     url: null,
     zip: 78702,
-    __typename: 'properties',
+    __typename: 'houses',
   },
 ];
 
 const mocks = [
   {
     request: {
-      query: GET_PROPERTIES,
+      query: GET_HOUSES,
       variables: { userId: 123 },
     },
     result: {
       data: {
-        properties: mockProperties,
+        houses: mockHouses,
       },
     },
   },
@@ -66,23 +66,23 @@ const mocks = [
     },
     result: {
       data: {
-        delete_properties_by_pk: { id: 1, __typename: 'properties' },
+        delete_houses_by_pk: { id: 1, __typename: 'houses' },
       },
     },
   },
 ];
 
 describe('IndexPage', () => {
-  it('renders empty state if api returns no properties', async function () {
+  it('renders empty state if api returns no houses', async function () {
     const emptyMockedData = [
       {
         request: {
-          query: GET_PROPERTIES,
+          query: GET_HOUSES,
           variables: { userId: 123 },
         },
         result: {
           data: {
-            properties: [],
+            houses: [],
           },
         },
       },
@@ -100,7 +100,7 @@ describe('IndexPage', () => {
     expect(noData).toBeInTheDocument();
   });
 
-  it('renders the address cell of the first property returned from the api', async function () {
+  it('renders the address cell of the first house returned from the api', async function () {
     render(
       <MockedProvider mocks={mocks}>
         <IndexPage />
@@ -115,7 +115,7 @@ describe('IndexPage', () => {
     expect(addressCell).toBeInTheDocument();
   });
 
-  it('deletes a property', async function () {
+  it('deletes a house', async function () {
     render(
       <MockedProvider mocks={mocks}>
         <IndexPage />
@@ -136,7 +136,7 @@ describe('IndexPage', () => {
     expect(addressCell).not.toBeInTheDocument();
   });
 
-  it('updates a property', async function () {
+  it('updates a house', async function () {
     jest.spyOn(console, 'warn').mockImplementation(() => null);
     const UPDATED_NOTES_VALUE = 'I am the new note';
 
@@ -144,19 +144,19 @@ describe('IndexPage', () => {
       request: {
         query: UPDATE_HOUSE,
         variables: {
-          id: mockProperties[0].id,
+          id: mockHouses[0].id,
           _fields: {
-            name: mockProperties[0].name,
-            price: mockProperties[0].price,
-            size: mockProperties[0].size,
-            type: mockProperties[0].type,
+            name: mockHouses[0].name,
+            price: mockHouses[0].price,
+            size: mockHouses[0].size,
+            type: mockHouses[0].type,
             notes: UPDATED_NOTES_VALUE,
           },
         },
       },
       result: {
         data: {
-          update_properties_by_pk: { id: 1, __typename: 'properties' },
+          update_houses_by_pk: { id: 1, __typename: 'houses' },
         },
       },
     };

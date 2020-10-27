@@ -4,22 +4,22 @@ import { gql, Reference, useMutation } from '@apollo/client';
 import { Button, Form, Input, InputNumber, Table, Tooltip } from 'antd';
 import { useState } from 'react';
 
-import { PROPERTY_FRAGMENT } from '../fragments/property';
-import { Property } from '../types/property';
+import { HOUSE_FRAGMENT } from '../fragments/house';
+import { House } from '../types/house';
 import { formatCurrency } from '../utils/text-formatter';
 
 export const UPDATE_HOUSE = gql`
-  mutation UpdateHouse($id: Int!, $_fields: properties_set_input) {
-    update_properties_by_pk(pk_columns: { id: $id }, _set: $_fields) {
-      ...Property
+  mutation UpdateHouse($id: Int!, $_fields: houses_set_input) {
+    update_houses_by_pk(pk_columns: { id: $id }, _set: $_fields) {
+      ...House
     }
   }
-  ${PROPERTY_FRAGMENT}
+  ${HOUSE_FRAGMENT}
 `;
 
 export const DELETE_HOUSE = gql`
   mutation DeleteHouse($id: Int!) {
-    delete_properties_by_pk(id: $id) {
+    delete_houses_by_pk(id: $id) {
       id
     }
   }
@@ -42,13 +42,13 @@ interface TableRecord {
   actions: number;
 }
 
-const toTableRows = (properties: Property[]): TableRecord[] =>
-  properties.map((p, idx) => ({
+const toTableRows = (houses: House[]): TableRecord[] =>
+  houses.map((p, idx) => ({
     key: idx.toString(),
     name: p.name,
     address: {
-      address1: p.address_1,
-      address2: p.address_2,
+      address1: p.address1,
+      address2: p.address2,
       city: p.city,
       state: p.state,
       zip: p.zip,
@@ -102,12 +102,12 @@ const EditableCell: React.FC<EditableCellProps> = ({
 };
 
 interface Props {
-  properties: Property[];
+  houses: House[];
 }
 
-const HousesTable: React.FC<Props> = ({ properties }) => {
+const HousesTable: React.FC<Props> = ({ houses }) => {
   const [updateHouse] = useMutation(UPDATE_HOUSE);
-  const [deletePropertyMutation] = useMutation(DELETE_HOUSE);
+  const [deleteHouseMutation] = useMutation(DELETE_HOUSE);
   const [form] = Form.useForm();
   const [editingKey, setEditingKey] = useState('');
 
@@ -142,7 +142,7 @@ const HousesTable: React.FC<Props> = ({ properties }) => {
           __typename: 'Mutation',
           updateComment: {
             id: houseId,
-            __typename: 'properties',
+            __typename: 'houses',
             ...newHouseData,
           },
         },
@@ -154,20 +154,20 @@ const HousesTable: React.FC<Props> = ({ properties }) => {
     }
   };
 
-  const tableRows = toTableRows(properties);
+  const tableRows = toTableRows(houses);
   const handleDelete = (id: number) => {
-    deletePropertyMutation({
+    deleteHouseMutation({
       variables: { id },
-      update: (cache, { data: { delete_properties_by_pk: deletedProperty } }) => {
+      update: (cache, { data: { delete_houses_by_pk: deletedHouse } }) => {
         cache.modify({
           fields: {
-            properties(existingPropertyRefs = [], { readField }) {
-              if (!deletedProperty) {
-                return existingPropertyRefs;
+            houses(existingHouseRefs = [], { readField }) {
+              if (!deletedHouse) {
+                return existingHouseRefs;
               }
 
-              return existingPropertyRefs.filter(
-                (propertyRef: Reference) => readField('id', propertyRef) !== deletedProperty.id
+              return existingHouseRefs.filter(
+                (houseRef: Reference) => readField('id', houseRef) !== deletedHouse.id
               );
             },
           },

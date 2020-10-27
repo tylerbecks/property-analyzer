@@ -3,19 +3,17 @@ import { gql, useMutation } from '@apollo/client';
 import { Button } from 'antd';
 import { useSession } from 'next-auth/client';
 
-import { PROPERTY_FRAGMENT } from '../../fragments/property';
-import { GET_PROPERTIES } from '../../pages/index';
-import { Property } from '../../types/property';
+import { HOUSE_FRAGMENT } from '../../fragments/house';
+import { GET_HOUSES } from '../../pages/index';
+import { House } from '../../types/house';
 
-const ADD_PROPERTY = gql`
-  mutation AddProperty($property: properties_insert_input!) {
-    insert_properties_one(object: $property) {
-      id
-      user_id
-      ...PROPERTY
+const ADD_HOUSE = gql`
+  mutation AddHouse($house: houses_insert_input!) {
+    insert_houses_one(object: $house) {
+      ...House
     }
   }
-  ${PROPERTY_FRAGMENT}
+  ${HOUSE_FRAGMENT}
 `;
 
 // The maximum is exclusive and the minimum is inclusive
@@ -23,27 +21,27 @@ const getRandomNum = (min: number, max: number) => Math.floor(Math.random() * (m
 
 const QuickAddButton: React.FC = () => {
   const [session] = useSession();
-  const [addProperty] = useMutation(ADD_PROPERTY, {
-    update(cache, { data: { insert_properties_one } }) {
+  const [addHouse] = useMutation(ADD_HOUSE, {
+    update(cache, { data: { insert_houses_one } }) {
       const data = cache.readQuery({
-        query: GET_PROPERTIES,
+        query: GET_HOUSES,
         variables: { userId: session.user.id },
-      }) as { properties: Array<Property> };
+      }) as { houses: Array<House> };
 
       cache.writeQuery({
-        query: GET_PROPERTIES,
+        query: GET_HOUSES,
         variables: { userId: session.user.id },
         data: {
-          properties: [...data.properties, insert_properties_one],
+          houses: [...data.houses, insert_houses_one],
         },
       });
     },
   });
 
   const onClick = () => {
-    const property = {
-      address_1: `${getRandomNum(1, 9999)} Random Street`,
-      address_2: undefined,
+    const house = {
+      address1: `${getRandomNum(1, 9999)} Random Street`,
+      address2: undefined,
       city: 'Austin',
       country: 'USA',
       name: 'Auto-generated',
@@ -53,18 +51,18 @@ const QuickAddButton: React.FC = () => {
       state: 'TX',
       type: 'House',
       url: undefined,
-      user_id: session.user.id,
+      userId: session.user.id,
       zip: getRandomNum(10000, 99999),
     };
 
-    addProperty({
-      variables: { property },
+    addHouse({
+      variables: { house },
     });
   };
 
   return (
     <Button type="primary" onClick={onClick}>
-      <PlusOutlined /> Quick Add Property
+      <PlusOutlined /> Quick Add House
     </Button>
   );
 };
