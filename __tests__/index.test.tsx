@@ -1,8 +1,9 @@
 import { MockedProvider } from '@apollo/client/testing';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import IndexPage, { DELETE_PROPERTY, GET_PROPERTIES } from '../pages/index';
+import { DELETE_HOUSE, UPDATE_HOUSE } from '../components/houses-table';
+import IndexPage, { GET_PROPERTIES } from '../pages/index';
 import { waitForResponse } from '../testing_utils';
 
 jest.mock('next-auth/client', () => ({
@@ -18,7 +19,7 @@ const mockProperties = [
     city: 'Austin',
     country: 'United States',
     name: '123 Foobar St',
-    notes: null,
+    notes: 'I am a note',
     price: 100000,
     size: 550,
     state: 'TX',
@@ -60,7 +61,7 @@ const mocks = [
   },
   {
     request: {
-      query: DELETE_PROPERTY,
+      query: DELETE_HOUSE,
       variables: { id: 1 },
     },
     result: {
@@ -133,5 +134,58 @@ describe('IndexPage', () => {
       name: /123 foobar st unit 420 austin, tx, 78702/i,
     });
     expect(addressCell).not.toBeInTheDocument();
+  });
+
+  it('updates a property', async function () {
+    jest.spyOn(console, 'warn').mockImplementation(() => null);
+    const UPDATED_NOTES_VALUE = 'I am the new note';
+
+    const updateMock = {
+      request: {
+        query: UPDATE_HOUSE,
+        variables: {
+          id: mockProperties[0].id,
+          _fields: {
+            name: mockProperties[0].name,
+            price: mockProperties[0].price,
+            size: mockProperties[0].size,
+            type: mockProperties[0].type,
+            notes: UPDATED_NOTES_VALUE,
+          },
+        },
+      },
+      result: {
+        data: {
+          update_properties_by_pk: { id: 1, __typename: 'properties' },
+        },
+      },
+    };
+
+    render(
+      <MockedProvider mocks={[...mocks, updateMock]}>
+        <IndexPage />
+      </MockedProvider>
+    );
+
+    await waitForResponse();
+
+    const originalNotesCell = screen.getByRole('cell', { name: /i am a note/i });
+    expect(originalNotesCell).toBeInTheDocument();
+
+    const editButtons = screen.getAllByRole('button', { name: /edit/i });
+    userEvent.click(editButtons[0]);
+
+    const notesInput = screen.getByDisplayValue(/i am a note/i);
+    userEvent.clear(notesInput);
+    userEvent.type(notesInput, UPDATED_NOTES_VALUE);
+
+    const saveButton = screen.getByRole('button', { name: /save/i });
+    userEvent.click(saveButton);
+
+    const updatedNotesCell = screen.getByRole('cell', { name: UPDATED_NOTES_VALUE });
+    expect(updatedNotesCell).toBeInTheDocument();
+    await waitFor(() =>
+      expect(screen.getAllByRole('button', { name: /edit/i })[0]).toHaveAttribute('disabled')
+    );
   });
 });
