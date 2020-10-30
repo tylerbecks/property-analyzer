@@ -2,6 +2,7 @@
 import { DeleteOutlined, EditOutlined } from '@ant-design/icons';
 import { gql, Reference, useMutation } from '@apollo/client';
 import { Button, Form, Input, InputNumber, Table, Tooltip } from 'antd';
+import Link from 'next/link';
 import { useState } from 'react';
 
 import { HOUSE_FRAGMENT } from '../fragments/house';
@@ -27,7 +28,10 @@ export const DELETE_HOUSE = gql`
 
 interface TableRecord {
   key: string;
-  name: string;
+  name: {
+    name: string;
+    id: number;
+  };
   address: {
     address1: string;
     address2: string | undefined;
@@ -42,10 +46,21 @@ interface TableRecord {
   actions: number;
 }
 
+interface UpdateHouseData {
+  name: string;
+  type: string | undefined;
+  price: number;
+  size: number;
+  notes: string | undefined;
+}
+
 const toTableRows = (houses: House[]): TableRecord[] =>
   houses.map((p, idx) => ({
     key: idx.toString(),
-    name: p.name,
+    name: {
+      name: p.name,
+      id: p.id,
+    },
     address: {
       address1: p.address1,
       address2: p.address2,
@@ -125,8 +140,8 @@ const HousesTable: React.FC<Props> = ({ houses }) => {
   const saveChanges = async (houseId: number) => {
     try {
       const row = (await form.validateFields()) as TableRecord;
-      const newHouseData = {
-        name: row.name,
+      const newHouseData: UpdateHouseData = {
+        name: row.name.name,
         type: row.type,
         price: row.price,
         size: row.size,
@@ -181,6 +196,11 @@ const HousesTable: React.FC<Props> = ({ houses }) => {
       title: 'Name',
       dataIndex: 'name',
       editable: true,
+      render: ({ id, name }: { id: number; name: string }) => (
+        <Link href={`/houses/${id}`}>
+          <a>{name}</a>
+        </Link>
+      ),
     },
     {
       title: 'Address',
@@ -269,6 +289,7 @@ const HousesTable: React.FC<Props> = ({ houses }) => {
     if (!col.editable) {
       return col;
     }
+
     return {
       ...col,
       onCell: (record: TableRecord) => ({
