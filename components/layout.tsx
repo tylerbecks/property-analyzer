@@ -1,11 +1,17 @@
+/** @jsx jsx */
+import { css, jsx } from '@emotion/core';
 import { Layout } from 'antd';
 
 import Header from './header';
 
 const { Content } = Layout;
 
+const layoutCss = css`
+  height: 100vh;
+`;
+
 const MyLayout: React.FC = ({ children }) => (
-  <Layout>
+  <Layout css={layoutCss}>
     <Header />
 
     <Layout>
