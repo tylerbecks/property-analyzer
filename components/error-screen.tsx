@@ -24,7 +24,6 @@ interface Props {
 }
 
 const LoadingScreen: React.FC<Props> = ({ error }) => {
-  console.log({ ...error });
   console.error(error);
 
   return (

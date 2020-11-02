@@ -165,7 +165,7 @@ const HousesTable: React.FC<Props> = ({ houses }) => {
 
       setEditingKey('');
     } catch (errInfo) {
-      console.log('Validate Failed:', errInfo);
+      console.warn('Validate Failed:', errInfo);
     }
   };
 
