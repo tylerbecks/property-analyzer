@@ -59,6 +59,7 @@ module.exports = {
     'react/react-in-jsx-scope': 'off',
     'simple-import-sort/sort': 'error',
     'sort-imports': 'off',
+    'no-console': ['error', { allow: ['warn', 'error'] }],
   },
   settings: {
     react: {
