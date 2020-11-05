@@ -1,5 +1,5 @@
 import { gql, useMutation, useQuery } from '@apollo/client';
-import { Col, Descriptions, Empty, Form, Row, Typography } from 'antd';
+import { Col, Descriptions, Form, Row, Statistic, Typography } from 'antd';
 import { useRouter } from 'next/router';
 
 import ErrorScreen from '../../components/error-screen';
@@ -10,6 +10,9 @@ import { HOUSE_FRAGMENT } from '../../fragments/house';
 import { House } from '../../types/house';
 
 const { Title, Paragraph, Text } = Typography;
+
+// TODO add fields to update operating costs
+const OPERATING_COSTS = 0;
 
 const UPDATE_HOUSE_INCOME = gql`
   mutation UpdateHouseRentalIncome($propertyId: Int!, $rentalIncome: Int) {
@@ -52,7 +55,7 @@ const HousePage: React.FC = () => {
 
   const { houses_by_pk: house }: { houses_by_pk: FullHouse } = data;
 
-  const onBlurRentalIncome = ({ currentTarget: { value } }: React.FormEvent<HTMLInputElement>) => {
+  const onChangeRentalIncome = (value: string) => {
     const valueNum = Number(value);
     if (Number.isNaN(valueNum)) {
       return;
@@ -60,8 +63,19 @@ const HousePage: React.FC = () => {
 
     updateHouseIncome({
       variables: { rentalIncome: valueNum, propertyId },
+      optimisticResponse: {
+        __typename: 'Mutation',
+        houses_by_pk: {
+          ...house,
+          __typename: 'houses',
+          rentalIncome: valueNum,
+        },
+      },
     });
   };
+
+  const netOperatingIncome = house.rentalIncome ? house.rentalIncome - OPERATING_COSTS : 0;
+  const capRate = house.rentalIncome ? netOperatingIncome / house.price : null;
 
   return (
     <Row>
@@ -82,7 +96,7 @@ const HousePage: React.FC = () => {
         </Paragraph>
 
         <Descriptions title="Details">
-          <Descriptions.Item label="Price">{house.price}</Descriptions.Item>
+          <Descriptions.Item label="Purchase Price">{house.price}</Descriptions.Item>
           <Descriptions.Item label="Size">{house.size.toLocaleString()}</Descriptions.Item>
           <Descriptions.Item label="Type">{house.type}</Descriptions.Item>
           <Descriptions.Item label="Notes">{house.notes}</Descriptions.Item>
@@ -95,14 +109,22 @@ const HousePage: React.FC = () => {
             rules={[{ type: 'number', min: 0 }]}
             initialValue={house.rentalIncome}
           >
-            <InputCurrency onBlur={onBlurRentalIncome} />
+            <InputCurrency onChange={onChangeRentalIncome} />
           </Form.Item>
         </Form>
       </Col>
       <Col span={12}>
         <Title level={3}>Stats</Title>
-        <Paragraph>Coming Soon</Paragraph>
-        <Empty />
+        {capRate ? (
+          <Statistic
+            title="Cap Rate"
+            value={capRate.toFixed(2)}
+            precision={2}
+            formatter={(value) => `${value}%`}
+          />
+        ) : (
+          <Paragraph>Please Enter rental income to see the cap rate</Paragraph>
+        )}
       </Col>
     </Row>
   );
