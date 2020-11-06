@@ -27,47 +27,40 @@ export const DELETE_HOUSE = gql`
 `;
 
 interface TableRecord {
+  actions: number;
+  address1: string;
+  address2: string | undefined;
+  city: string;
+  state: string;
+  zip: string;
+  id: number;
   key: string;
-  name: {
-    name: string;
-    id: number;
-  };
-  address: {
-    address1: string;
-    address2: string | undefined;
-    city: string;
-    state: string;
-    zip: string;
-  };
+  name: string;
+  notes: string | undefined;
   price: number;
   size: number;
   type: string | undefined;
-  notes: string | undefined;
-  actions: number;
 }
 
 interface UpdateHouseData {
+  address1: string;
   name: string;
-  type: string | undefined;
+  notes: string | undefined;
   price: number;
   size: number;
-  notes: string | undefined;
+  type: string | undefined;
 }
 
 const toTableRows = (houses: House[]): TableRecord[] =>
   houses.map((p, idx) => ({
     key: idx.toString(),
-    name: {
-      name: p.name,
-      id: p.id,
-    },
-    address: {
-      address1: p.address1,
-      address2: p.address2,
-      city: p.city,
-      state: p.state,
-      zip: p.zip,
-    },
+    name: p.name,
+    id: p.id,
+    address1: p.address1,
+    address2: p.address2,
+    city: p.city,
+    state: p.state,
+    zip: p.zip,
     price: p.price,
     size: p.size,
     type: p.type,
@@ -86,7 +79,7 @@ const HousesTable: React.FC<Props> = ({ houses }) => {
   const [editingKey, setEditingKey] = useState('');
 
   const edit = (record: TableRecord) => {
-    form.setFieldsValue(record);
+    form.setFieldsValue({ ...record, name: record.name });
     setEditingKey(record.key);
   };
 
@@ -100,11 +93,12 @@ const HousesTable: React.FC<Props> = ({ houses }) => {
     try {
       const row = (await form.validateFields()) as TableRecord;
       const newHouseData: UpdateHouseData = {
-        name: row.name.name,
-        type: row.type,
+        address1: row.address1,
+        name: row.name,
+        notes: row.notes,
         price: row.price,
         size: row.size,
-        notes: row.notes,
+        type: row.type,
       };
 
       updateHouse({
@@ -156,30 +150,18 @@ const HousesTable: React.FC<Props> = ({ houses }) => {
       editable: true,
       required: true,
       title: 'Name',
-      render: ({ id, name }: { id: number; name: string }) => (
+      render: (name: string, { id }: TableRecord) => (
         <Link href={`/houses/${id}`}>
           <a>{name}</a>
         </Link>
       ),
     },
     {
-      dataIndex: 'address',
-      editable: false,
+      dataIndex: 'address1',
+      editable: true,
       required: true,
       title: 'Address',
-      render: ({
-        address1,
-        address2,
-        city,
-        state,
-        zip,
-      }: {
-        address1: string;
-        address2: string;
-        city: string;
-        state: string;
-        zip: string;
-      }) => (
+      render: (address1: string, { address2, city, state, zip }: TableRecord) => (
         <>
           <div>{address1}</div>
           {address2 && <div>{address2}</div>}
