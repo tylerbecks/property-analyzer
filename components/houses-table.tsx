@@ -108,7 +108,7 @@ const HousesTable: React.FC<Props> = ({ houses }) => {
         },
         optimisticResponse: {
           __typename: 'Mutation',
-          updateComment: {
+          update_houses_by_pk: {
             id: houseId,
             __typename: 'houses',
             ...newHouseData,
