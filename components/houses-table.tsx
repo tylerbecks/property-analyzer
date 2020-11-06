@@ -75,47 +75,6 @@ const toTableRows = (houses: House[]): TableRecord[] =>
     actions: p.id,
   }));
 
-interface EditableCellProps extends React.HTMLAttributes<HTMLElement> {
-  editing: boolean;
-  dataIndex: string;
-  editable: true;
-  title: string;
-  inputType: 'number' | 'text';
-  record: TableRecord;
-  index: number;
-  children: React.ReactNode;
-}
-
-const EditableCell: React.FC<EditableCellProps> = ({
-  editing,
-  dataIndex,
-  title,
-  inputType,
-  children,
-  ...restProps
-}) => {
-  return (
-    <td {...restProps}>
-      {editing ? (
-        <Form.Item
-          name={dataIndex}
-          style={{ margin: 0 }}
-          rules={[
-            {
-              required: true,
-              message: `Please Input ${title}!`,
-            },
-          ]}
-        >
-          {inputType === 'number' ? <InputNumber /> : <Input />}
-        </Form.Item>
-      ) : (
-        children
-      )}
-    </td>
-  );
-};
-
 interface Props {
   houses: House[];
 }
@@ -193,9 +152,10 @@ const HousesTable: React.FC<Props> = ({ houses }) => {
 
   const columns = [
     {
-      title: 'Name',
       dataIndex: 'name',
       editable: true,
+      required: true,
+      title: 'Name',
       render: ({ id, name }: { id: number; name: string }) => (
         <Link href={`/houses/${id}`}>
           <a>{name}</a>
@@ -203,9 +163,10 @@ const HousesTable: React.FC<Props> = ({ houses }) => {
       ),
     },
     {
-      title: 'Address',
       dataIndex: 'address',
       editable: false,
+      required: true,
+      title: 'Address',
       render: ({
         address1,
         address2,
@@ -227,31 +188,35 @@ const HousesTable: React.FC<Props> = ({ houses }) => {
       ),
     },
     {
-      title: 'Price',
       dataIndex: 'price',
       editable: true,
+      required: true,
+      title: 'Price',
       render: (price: number) => formatCurrency(String(price)),
     },
     {
-      title: 'Size',
       dataIndex: 'size',
       editable: true,
+      required: true,
+      title: 'Size',
       render: (size: number) => size.toLocaleString(),
     },
     {
-      title: 'Type',
       dataIndex: 'type',
       editable: true,
+      required: false,
+      title: 'Type',
     },
     {
-      title: 'Notes',
       dataIndex: 'notes',
       editable: true,
+      required: false,
+      title: 'Notes',
     },
     {
-      title: '',
       dataIndex: 'actions',
       editable: false,
+      title: '',
       render: (id: number, record: TableRecord) =>
         isEditing(record) ? (
           <span>
@@ -318,3 +283,41 @@ const HousesTable: React.FC<Props> = ({ houses }) => {
 };
 
 export default HousesTable;
+
+interface EditableCellProps extends React.HTMLAttributes<HTMLElement> {
+  children: React.ReactNode;
+  dataIndex: string;
+  editable: true;
+  editing: boolean;
+  index: number;
+  inputType: 'number' | 'text';
+  record: TableRecord;
+  required?: boolean;
+  title: string;
+}
+
+const EditableCell: React.FC<EditableCellProps> = ({
+  children,
+  dataIndex,
+  editing,
+  inputType,
+  required,
+  title,
+  ...restProps
+}) => {
+  return (
+    <td {...restProps}>
+      {editing ? (
+        <Form.Item
+          name={dataIndex}
+          style={{ margin: 0 }}
+          rules={[{ required, message: `Please Input ${title}!` }]}
+        >
+          {inputType === 'number' ? <InputNumber /> : <Input />}
+        </Form.Item>
+      ) : (
+        children
+      )}
+    </td>
+  );
+};

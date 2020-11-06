@@ -52,7 +52,7 @@ const QuickAddButton: React.FC = () => {
       type: 'House',
       url: undefined,
       userId: session.user.id,
-      zip: getRandomNum(10000, 99999),
+      zip: String(getRandomNum(10000, 99999)),
     };
 
     addHouse({

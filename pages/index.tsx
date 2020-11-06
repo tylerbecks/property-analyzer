@@ -6,7 +6,7 @@ import { Button } from 'antd';
 import { useSession } from 'next-auth/client';
 import Link from 'next/link';
 
-import QuickAddHouse from '../components/_convenience/quick-add-house';
+// import QuickAddHouse from '../components/_convenience/quick-add-house';
 import ErrorScreen from '../components/error-screen';
 import HousesTable from '../components/houses-table';
 import LoadingScreen from '../components/loading-screen';
