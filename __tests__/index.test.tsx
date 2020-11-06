@@ -146,6 +146,7 @@ describe('IndexPage', () => {
         variables: {
           id: mockHouses[0].id,
           _fields: {
+            address1: mockHouses[0].address1,
             name: mockHouses[0].name,
             price: mockHouses[0].price,
             size: mockHouses[0].size,
