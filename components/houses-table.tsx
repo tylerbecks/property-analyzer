@@ -258,11 +258,12 @@ const HousesTable: React.FC<Props> = ({ houses }) => {
     return {
       ...col,
       onCell: (record: TableRecord) => ({
-        record,
-        inputType: ['size', 'price'].includes(col.dataIndex) ? 'number' : 'text',
         dataIndex: col.dataIndex,
-        title: col.title,
         editing: isEditing(record),
+        inputType: ['size', 'price'].includes(col.dataIndex) ? 'number' : 'text',
+        record,
+        required: col.required,
+        title: col.title,
       }),
     };
   });
