@@ -123,9 +123,9 @@ const HousesTable: React.FC<Props> = ({ houses }) => {
   };
 
   const tableRows = toTableRows(houses);
-  const handleDelete = (id: number) => {
+  const handleDelete = (houseId: number) => {
     deleteHouseMutation({
-      variables: { id },
+      variables: { id: houseId },
       update: (cache, { data: { delete_houses_by_pk: deletedHouse } }) => {
         cache.modify({
           fields: {
@@ -140,6 +140,13 @@ const HousesTable: React.FC<Props> = ({ houses }) => {
             },
           },
         });
+      },
+      optimisticResponse: {
+        __typename: 'Mutation',
+        delete_houses_by_pk: {
+          id: houseId,
+          __typename: 'houses',
+        },
       },
     });
   };
