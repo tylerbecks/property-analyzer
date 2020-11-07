@@ -19,7 +19,7 @@ const newHouseButton = css`
 
 export const GET_HOUSES = gql`
   query GetHouses($userId: String!) {
-    houses(where: { userId: { _eq: $userId } }) {
+    houses(where: { userId: { _eq: $userId } }, order_by: { created_at: desc }) {
       ...House
     }
   }
