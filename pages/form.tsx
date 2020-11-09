@@ -3,6 +3,7 @@ import { useSession } from 'next-auth/client';
 import { useRouter } from 'next/router';
 
 import NewHouseForm from '../components/new-house-form';
+import WithUser from '../components/with-user-and-apollo';
 import { HOUSE_FRAGMENT } from '../fragments/house';
 import { UnsavedHouse } from '../types/house';
 
@@ -51,4 +52,4 @@ const FormPage: React.FC = () => {
   return <NewHouseForm onSubmit={onSubmit} />;
 };
 
-export default FormPage;
+export default WithUser(FormPage);

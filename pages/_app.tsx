@@ -1,18 +1,11 @@
 /** @jsx jsx */
 import 'antd/dist/antd.css';
 
-import { ApolloProvider } from '@apollo/client';
 import { css, Global, jsx } from '@emotion/core';
 import LogRocket from 'logrocket';
-import { Provider as NextAuthProvider, useSession } from 'next-auth/client';
+import { Provider as NextAuthProvider } from 'next-auth/client';
 import type { AppProps /*, AppContext */ } from 'next/app';
 import Head from 'next/head';
-
-import Layout from '../components/layout';
-import LoadingScreen from '../components/loading-screen';
-import Login from '../components/login';
-import UserProtectedRoute from '../components/user-protected-route';
-import { createApolloClient } from '../setup-apollo';
 
 // import App from "next/app";
 
@@ -38,9 +31,6 @@ const globalStyles = css`
 `;
 
 const MyApp: React.FC<AppProps> = ({ Component, pageProps }) => {
-  const [session, loading] = useSession();
-  const loggedIn = !!session;
-
   return (
     <>
       <Global styles={globalStyles} />
@@ -48,22 +38,9 @@ const MyApp: React.FC<AppProps> = ({ Component, pageProps }) => {
         <title>Property Analyzer</title>
         <link rel="icon" href="/favicon.ico" />
       </Head>
-
-      {loading ? (
-        <LoadingScreen />
-      ) : !loggedIn ? (
-        <Login />
-      ) : (
-        <NextAuthProvider session={pageProps.session}>
-          <ApolloProvider client={createApolloClient({ authorization: `Bearer ${session.token}` })}>
-            <UserProtectedRoute>
-              <Layout>
-                <Component {...pageProps} />
-              </Layout>
-            </UserProtectedRoute>
-          </ApolloProvider>
-        </NextAuthProvider>
-      )}
+      <NextAuthProvider session={pageProps.session}>
+        <Component {...pageProps} />
+      </NextAuthProvider>
     </>
   );
 };
