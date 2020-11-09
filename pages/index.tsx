@@ -10,6 +10,7 @@ import Link from 'next/link';
 import ErrorScreen from '../components/error-screen';
 import HousesTable from '../components/houses-table';
 import LoadingScreen from '../components/loading-screen';
+import withUserAndApollo from '../components/with-user-and-apollo';
 import { HOUSE_FRAGMENT } from '../fragments/house';
 
 const newHouseButton = css`
@@ -26,7 +27,7 @@ export const GET_HOUSES = gql`
   ${HOUSE_FRAGMENT}
 `;
 
-const IndexPage: React.FC = () => {
+export const IndexPage: React.FC = () => {
   const [session] = useSession();
   const options: QueryHookOptions = {
     variables: { userId: session.user.id },
@@ -52,4 +53,4 @@ const IndexPage: React.FC = () => {
   );
 };
 
-export default IndexPage;
+export default withUserAndApollo(IndexPage);

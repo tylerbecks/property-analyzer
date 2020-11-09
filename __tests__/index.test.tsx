@@ -3,7 +3,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { DELETE_HOUSE, UPDATE_HOUSE } from '../components/houses-table';
-import IndexPage, { GET_HOUSES } from '../pages/index';
+import { GET_HOUSES, IndexPage } from '../pages/index';
 import { waitForResponse } from '../testing_utils';
 
 jest.mock('next-auth/client', () => ({

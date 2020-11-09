@@ -69,6 +69,7 @@ const toTableRows = (houses: House[]): TableRecord[] =>
   }));
 
 interface Props {
+  /** The list of houses to display */
   houses: House[];
 }
 

@@ -5,6 +5,7 @@ import { useRouter } from 'next/router';
 import ErrorScreen from '../../components/error-screen';
 import InputCurrency from '../../components/input-currency';
 import LoadingScreen from '../../components/loading-screen';
+import withUserAndApollo from '../../components/with-user-and-apollo';
 import { HOUSE_FRAGMENT } from '../../fragments/house';
 import { House } from '../../types/house';
 
@@ -107,4 +108,4 @@ const HousePage: React.FC = () => {
   );
 };
 
-export default HousePage;
+export default withUserAndApollo(HousePage);
