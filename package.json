@@ -12,8 +12,10 @@
   "dependencies": {
     "@apollo/client": "^3.2.4",
     "@emotion/core": "^10.0.35",
+    "@types/faker": "^5.1.4",
     "@types/jsonwebtoken": "^8.5.0",
     "antd": "^4.7.0",
+    "faker": "^5.1.0",
     "framer-motion": "^2.9.4",
     "graphql": "^15.3.0",
     "jsonwebtoken": "^8.5.1",
