@@ -1,6 +1,7 @@
 import { PlusOutlined } from '@ant-design/icons';
 import { gql, useMutation } from '@apollo/client';
 import { Button } from 'antd';
+import faker from 'faker';
 import { useSession } from 'next-auth/client';
 
 import { HOUSE_FRAGMENT } from '../../fragments/house';
@@ -18,6 +19,8 @@ const ADD_HOUSE = gql`
 
 // The maximum is exclusive and the minimum is inclusive
 const getRandomNum = (min: number, max: number) => Math.floor(Math.random() * (max - min) + min);
+
+const maybeGet = (callback: () => unknown) => (getRandomNum(1, 100) > 50 ? callback() : undefined);
 
 const QuickAddButton: React.FC = () => {
   const [session] = useSession();
@@ -39,20 +42,21 @@ const QuickAddButton: React.FC = () => {
   });
 
   const onClick = () => {
+    const address1 = faker.address.streetAddress();
     const house = {
-      address1: `${getRandomNum(1, 9999)} Random Street`,
-      address2: undefined,
-      city: 'Austin',
-      country: 'USA',
-      name: 'Auto-generated',
-      notes: 'I am a note',
+      address1,
+      address2: maybeGet(() => faker.address.secondaryAddress()),
+      city: faker.address.city(),
+      country: faker.address.country(),
+      name: `${address1} (Auto-generated)`,
+      notes: maybeGet(() => faker.random.words()),
       price: getRandomNum(50000, 100000000),
       size: getRandomNum(100, 10000),
-      state: 'TX',
+      state: faker.address.stateAbbr(),
       type: 'House',
-      url: undefined,
+      url: maybeGet(() => faker.internet.url()),
       userId: session.user.id,
-      zip: String(getRandomNum(10000, 99999)),
+      zip: faker.address.zipCode(),
     };
 
     addHouse({
