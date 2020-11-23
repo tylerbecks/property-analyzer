@@ -9,48 +9,6 @@ import { HOUSE_FRAGMENT } from '../fragments/house';
 import { House } from '../types/house';
 import { formatCurrency } from '../utils/text-formatter';
 
-export const UPDATE_HOUSE = gql`
-  mutation UpdateHouse($id: Int!, $_fields: houses_set_input) {
-    update_houses_by_pk(pk_columns: { id: $id }, _set: $_fields) {
-      ...House
-    }
-  }
-  ${HOUSE_FRAGMENT}
-`;
-
-export const DELETE_HOUSE = gql`
-  mutation DeleteHouse($id: Int!) {
-    delete_houses_by_pk(id: $id) {
-      id
-    }
-  }
-`;
-
-interface TableRecord {
-  actions: number;
-  address1: string;
-  address2: string | undefined;
-  city: string;
-  state: string;
-  zip: string;
-  id: number;
-  key: string;
-  name: string;
-  notes: string | undefined;
-  price: number;
-  size: number;
-  type: string | undefined;
-}
-
-interface UpdateHouseData {
-  address1: string;
-  name: string;
-  notes: string | undefined;
-  price: number;
-  size: number;
-  type: string | undefined;
-}
-
 const toTableRows = (houses: House[]): TableRecord[] =>
   houses.map((p, idx) => ({
     key: idx.toString(),
@@ -312,3 +270,45 @@ const EditableCell: React.FC<EditableCellProps> = ({
     </td>
   );
 };
+
+interface TableRecord {
+  actions: number;
+  address1: string;
+  address2: string | undefined;
+  city: string;
+  state: string;
+  zip: string;
+  id: number;
+  key: string;
+  name: string;
+  notes: string | undefined;
+  price: number;
+  size: number;
+  type: string | undefined;
+}
+
+interface UpdateHouseData {
+  address1: string;
+  name: string;
+  notes: string | undefined;
+  price: number;
+  size: number;
+  type: string | undefined;
+}
+
+export const UPDATE_HOUSE = gql`
+  mutation UpdateHouse($id: Int!, $_fields: houses_set_input) {
+    update_houses_by_pk(pk_columns: { id: $id }, _set: $_fields) {
+      ...House
+    }
+  }
+  ${HOUSE_FRAGMENT}
+`;
+
+export const DELETE_HOUSE = gql`
+  mutation DeleteHouse($id: Int!) {
+    delete_houses_by_pk(id: $id) {
+      id
+    }
+  }
+`;

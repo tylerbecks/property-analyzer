@@ -50,7 +50,7 @@ const QuickAddButton: React.FC = () => {
       country: faker.address.country(),
       name: `${address1} (Auto-generated)`,
       notes: maybeGet(() => faker.random.words()),
-      price: getRandomNum(50000, 100000000),
+      price: getRandomNum(150000, 1500000),
       size: getRandomNum(100, 10000),
       state: faker.address.stateAbbr(),
       type: 'House',

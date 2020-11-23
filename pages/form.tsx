@@ -7,15 +7,6 @@ import WithUser from '../components/with-user-and-apollo';
 import { HOUSE_FRAGMENT } from '../fragments/house';
 import { UnsavedHouse } from '../types/house';
 
-const ADD_HOUSE = gql`
-  mutation AddHouse($house: houses_insert_input!) {
-    insert_houses_one(object: $house) {
-      ...House
-    }
-  }
-  ${HOUSE_FRAGMENT}
-`;
-
 const FormPage: React.FC = () => {
   const router = useRouter();
   const [session] = useSession();
@@ -31,7 +22,7 @@ const FormPage: React.FC = () => {
               const newHouseRef = cache.writeFragment({
                 data: newHouse,
                 fragment: gql`
-                  fragment NewHouse on House {
+                  fragment NewHouse on houses {
                     ...House
                   }
                   ${HOUSE_FRAGMENT}
@@ -53,3 +44,12 @@ const FormPage: React.FC = () => {
 };
 
 export default WithUser(FormPage);
+
+const ADD_HOUSE = gql`
+  mutation AddHouse($house: houses_insert_input!) {
+    insert_houses_one(object: $house) {
+      ...House
+    }
+  }
+  ${HOUSE_FRAGMENT}
+`;

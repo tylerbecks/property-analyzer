@@ -10,7 +10,7 @@
     "test": "jest --watch"
   },
   "dependencies": {
-    "@apollo/client": "^3.2.4",
+    "@apollo/client": "^3.2.7",
     "@emotion/core": "^10.0.35",
     "@types/faker": "^5.1.4",
     "@types/jsonwebtoken": "^8.5.0",
