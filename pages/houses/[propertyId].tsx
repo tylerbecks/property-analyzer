@@ -1,50 +1,55 @@
-import { gql, useMutation, useQuery } from '@apollo/client';
-import { Col, Descriptions, Form, Row, Statistic, Typography } from 'antd';
+/** @jsx jsx */
+import { gql, StoreObject, useMutation, useQuery } from '@apollo/client';
+import { css, jsx } from '@emotion/core';
+import { Col, Collapse, Form, Row, Statistic, Typography } from 'antd';
+import { useSession } from 'next-auth/client';
 import { useRouter } from 'next/router';
 
 import ErrorScreen from '../../components/error-screen';
 import InputCurrency from '../../components/input-currency';
+import InputPercent from '../../components/input-percent';
 import LoadingScreen from '../../components/loading-screen';
 import withUserAndApollo from '../../components/with-user-and-apollo';
 import { HOUSE_FRAGMENT } from '../../fragments/house';
 import { House } from '../../types/house';
+import { formatCurrency } from '../../utils/text-formatter';
+
+const { Panel } = Collapse;
 
 const { Title, Paragraph, Text } = Typography;
 
-// TODO add fields to update operating costs
-const OPERATING_COSTS = 0;
-
-const UPDATE_HOUSE_INCOME = gql`
-  mutation UpdateHouseRentalIncome($propertyId: Int!, $rentalIncome: Int) {
-    update_houses_by_pk(pk_columns: { id: $propertyId }, _set: { rentalIncome: $rentalIncome }) {
-      id
-      rentalIncome
-    }
-  }
+const inputNumberCss = css`
+  width: 50%;
 `;
 
-interface FullHouse extends House {
-  rentalIncome: number | undefined;
-}
-
-export const GET_HOUSE_BY_ID = gql`
-  query GetHouseById($propertyId: Int!) {
-    houses_by_pk(id: $propertyId) {
-      rentalIncome
-      ...House
-    }
+const getVacancyNominal = (rentalIncome: number | undefined, vacancyRate = 0) => {
+  if (!rentalIncome) {
+    return 0;
   }
-  ${HOUSE_FRAGMENT}
-`;
+
+  const vacancyNominal = rentalIncome * (vacancyRate / 100);
+  return Math.round(vacancyNominal * 100) / 100;
+};
+
+export const getNetMonthlyRevenue = (rentalIncome: number | undefined, vacancyRate = 0): number => {
+  if (!rentalIncome) return 0;
+
+  const vacancyNominal = getVacancyNominal(rentalIncome, vacancyRate);
+  return rentalIncome - vacancyNominal;
+};
 
 const HousePage: React.FC = () => {
   const router = useRouter();
   const { propertyId } = router.query;
+  const [session] = useSession();
 
   const { loading, error, data } = useQuery(GET_HOUSE_BY_ID, {
-    variables: { propertyId },
+    variables: { id: propertyId },
   });
-  const [updateHouseIncome] = useMutation(UPDATE_HOUSE_INCOME);
+
+  const [updateHouse] = useMutation(UPDATE_HOUSE);
+  const [addHouseAssumptions] = useMutation(ADD_HOUSE_ASSUMPTIONS);
+  const [updateHouseAssumptions] = useMutation(UPDATE_HOUSE_ASSUMPTIONS);
 
   if (loading) {
     return <LoadingScreen />;
@@ -55,27 +60,102 @@ const HousePage: React.FC = () => {
 
   const { houses_by_pk: house }: { houses_by_pk: FullHouse } = data;
 
-  const onChangeRentalIncome = (value: string) => {
-    const valueNum = Number(value);
-    if (Number.isNaN(valueNum)) {
-      return;
-    }
+  const withNumVal = (func: (key: string, value: number) => void) => {
+    return (key: string, value: string) => {
+      const valueNum = Number(value);
+      if (Number.isNaN(valueNum)) {
+        return;
+      }
 
-    updateHouseIncome({
-      variables: { rentalIncome: valueNum, propertyId },
+      func(key, valueNum);
+    };
+  };
+
+  const changeHouse = (key: string, value: unknown) => {
+    updateHouse({
+      variables: { _set: { [key]: value }, id: propertyId },
       optimisticResponse: {
         __typename: 'Mutation',
-        houses_by_pk: {
+        update_houses_by_pk: {
           ...house,
-          __typename: 'houses',
-          rentalIncome: valueNum,
+          [key]: value,
         },
       },
     });
   };
 
-  const netOperatingIncome = house.rentalIncome ? house.rentalIncome - OPERATING_COSTS : 0;
-  const capRate = house.rentalIncome ? netOperatingIncome / house.price : null;
+  const changeAssumption = (key: string, value: number) => {
+    if (house.assumption) {
+      updateHouseAssumptions({
+        variables: {
+          _set: { [key]: value },
+          id: house.assumption.id,
+        },
+        update: (cache, { data: { update_assumptions_by_pk: newAssumptionObj } }) => {
+          cache.modify({
+            id: cache.identify((house as unknown) as StoreObject),
+            fields: {
+              assumption() {
+                const newAssumptionRef = cache.writeFragment({
+                  data: newAssumptionObj,
+                  fragment: gql`
+                    fragment NewAssumption on assumptions {
+                      ...Assumption
+                    }
+                    ${ASSUMPTION_FRAGMENT}
+                  `,
+                  fragmentName: 'NewAssumption',
+                });
+
+                return newAssumptionRef;
+              },
+            },
+          });
+        },
+      });
+    } else {
+      addHouseAssumptions({
+        variables: { assumptions: { userId: session.user.id, houseId: house.id, [key]: value } },
+        update: (cache, { data: { insert_assumptions_one: newAssumptionObj } }) => {
+          cache.modify({
+            id: cache.identify((house as unknown) as StoreObject),
+            fields: {
+              assumption() {
+                const newAssumptionRef = cache.writeFragment({
+                  data: newAssumptionObj,
+                  fragment: gql`
+                    fragment NewAssumption on assumptions {
+                      ...Assumption
+                    }
+                    ${ASSUMPTION_FRAGMENT}
+                  `,
+                  fragmentName: 'NewAssumption',
+                });
+
+                return newAssumptionRef;
+              },
+            },
+          });
+        },
+      });
+    }
+  };
+
+  const monthlyTaxesNominal = house.assumption?.tax
+    ? (house.price * (house.assumption.tax / 100)) / 12
+    : 0;
+  const monthlyOperatingCosts = getSum([
+    monthlyTaxesNominal,
+    house.assumption?.propertyInsurance,
+    house.assumption?.management,
+    house.assumption?.maintenance,
+    house.assumption?.utilities,
+    house.assumption?.hoa,
+  ]);
+  const netMonthlyRevenue = getNetMonthlyRevenue(house.rentalIncome, house.assumption?.vacancy);
+  const netMonthlyOperatingIncome = netMonthlyRevenue - monthlyOperatingCosts;
+  const netOperatingIncome = netMonthlyOperatingIncome * 12;
+  const capRate = house.rentalIncome ? (netOperatingIncome / house.price) * 100 : null;
 
   return (
     <Row>
@@ -95,24 +175,196 @@ const HousePage: React.FC = () => {
           </div>
         </Paragraph>
 
-        <Descriptions title="Details">
-          <Descriptions.Item label="Purchase Price">{house.price}</Descriptions.Item>
-          <Descriptions.Item label="Size">{house.size.toLocaleString()}</Descriptions.Item>
-          <Descriptions.Item label="Type">{house.type}</Descriptions.Item>
-          <Descriptions.Item label="Notes">{house.notes}</Descriptions.Item>
-        </Descriptions>
-
-        <Form>
+        <Form layout="vertical">
+          <Form.Item
+            name="price"
+            label="Purchase Price"
+            rules={[{ type: 'number', min: 1 }]}
+            initialValue={house.price}
+          >
+            <InputCurrency
+              css={inputNumberCss}
+              onChange={(value: string) => {
+                withNumVal(changeHouse)('price', value);
+              }}
+            />
+          </Form.Item>
           <Form.Item
             name="rentalIncome"
-            label="Potential Rental Income"
+            label="Monthly Rental Income"
             rules={[{ type: 'number', min: 0 }]}
             initialValue={house.rentalIncome}
           >
-            <InputCurrency onChange={onChangeRentalIncome} />
+            <InputCurrency
+              css={inputNumberCss}
+              onChange={(value: string) => {
+                withNumVal(changeHouse)('rentalIncome', value);
+              }}
+            />
           </Form.Item>
+          <Form.Item
+            name="vacancy"
+            label="Vacancy Rate"
+            rules={[{ type: 'number', min: 0 }]}
+            initialValue={house.assumption?.vacancy || 0}
+            help={
+              <VacancyHelp vacancy={house.assumption?.vacancy} rentalIncome={house.rentalIncome} />
+            }
+          >
+            <InputPercent
+              css={inputNumberCss}
+              onChange={(value: string) => {
+                withNumVal(changeAssumption)('vacancy', value);
+              }}
+            />
+          </Form.Item>
+          <Form.Item
+            name="downPercent"
+            label="Down Payment"
+            rules={[{ type: 'number', min: 0 }]}
+            initialValue={house.assumption?.downPercent || 0}
+            help={
+              house.assumption?.downPercent &&
+              formatCurrency(house.price * (house.assumption.downPercent / 100))
+            }
+          >
+            <InputPercent
+              css={inputNumberCss}
+              onChange={(value: string) => {
+                withNumVal(changeAssumption)('downPercent', value);
+              }}
+            />
+          </Form.Item>
+          <Form.Item
+            name="closing"
+            label="Closing Costs"
+            rules={[{ type: 'number', min: 0 }]}
+            initialValue={house.assumption?.closing || 0}
+          >
+            <InputCurrency
+              css={inputNumberCss}
+              onChange={(value: string) => {
+                withNumVal(changeAssumption)('closing', value);
+              }}
+            />
+          </Form.Item>
+          <Form.Item
+            name="appreciation"
+            label="Appreciation Rate"
+            rules={[{ type: 'number', min: 0 }]}
+            initialValue={house.assumption?.appreciation || 0}
+          >
+            <InputPercent
+              css={inputNumberCss}
+              onChange={(value: string) => {
+                withNumVal(changeAssumption)('appreciation', value);
+              }}
+            />
+          </Form.Item>
+          <Form.Item
+            name="inflation"
+            label="Inflation Rate"
+            rules={[{ type: 'number', min: 0 }]}
+            initialValue={house.assumption?.inflation || 0}
+          >
+            <InputPercent
+              css={inputNumberCss}
+              onChange={(value: string) => {
+                withNumVal(changeAssumption)('inflation', value);
+              }}
+            />
+          </Form.Item>
+
+          <Collapse ghost>
+            <Panel
+              header={`Monthly Operating Expenses: ${formatCurrency(monthlyOperatingCosts)}`}
+              key="1"
+            >
+              <Form.Item
+                name="tax"
+                label="Tax Rate"
+                rules={[{ type: 'number', min: 0 }]}
+                initialValue={house.assumption?.tax || 0}
+                help={house.assumption?.tax && `${formatCurrency(monthlyTaxesNominal)} / month`}
+              >
+                <InputPercent
+                  css={inputNumberCss}
+                  onChange={(value: string) => {
+                    withNumVal(changeAssumption)('tax', value);
+                  }}
+                />
+              </Form.Item>
+
+              <Form.Item
+                name="propertyInsurance"
+                label="Property Insurance"
+                rules={[{ type: 'number', min: 0 }]}
+                initialValue={house.assumption?.propertyInsurance || 0}
+              >
+                <InputCurrency
+                  css={inputNumberCss}
+                  onChange={(value: string) => {
+                    withNumVal(changeAssumption)('propertyInsurance', value);
+                  }}
+                />
+              </Form.Item>
+              <Form.Item
+                name="management"
+                label="Management Fee"
+                rules={[{ type: 'number', min: 0 }]}
+                initialValue={house.assumption?.management || 0}
+              >
+                <InputCurrency
+                  css={inputNumberCss}
+                  onChange={(value: string) => {
+                    withNumVal(changeAssumption)('management', value);
+                  }}
+                />
+              </Form.Item>
+              <Form.Item
+                name="maintenance"
+                label="Maintenance Fee"
+                rules={[{ type: 'number', min: 0 }]}
+                initialValue={house.assumption?.maintenance || 0}
+              >
+                <InputCurrency
+                  css={inputNumberCss}
+                  onChange={(value: string) => {
+                    withNumVal(changeAssumption)('maintenance', value);
+                  }}
+                />
+              </Form.Item>
+              <Form.Item
+                name="utilities"
+                label="Utilities"
+                rules={[{ type: 'number', min: 0 }]}
+                initialValue={house.assumption?.utilities || 0}
+              >
+                <InputCurrency
+                  css={inputNumberCss}
+                  onChange={(value: string) => {
+                    withNumVal(changeAssumption)('utilities', value);
+                  }}
+                />
+              </Form.Item>
+              <Form.Item
+                name="hoa"
+                label="HOA Fee"
+                rules={[{ type: 'number', min: 0 }]}
+                initialValue={house.assumption?.hoa || 0}
+              >
+                <InputCurrency
+                  css={inputNumberCss}
+                  onChange={(value: string) => {
+                    withNumVal(changeAssumption)('hoa', value);
+                  }}
+                />
+              </Form.Item>
+            </Panel>
+          </Collapse>
         </Form>
       </Col>
+
       <Col span={12}>
         <Title level={3}>Stats</Title>
         {capRate ? (
@@ -131,3 +383,106 @@ const HousePage: React.FC = () => {
 };
 
 export default withUserAndApollo(HousePage);
+
+interface VacancyHelpProps {
+  vacancy: number | undefined;
+  rentalIncome: number | undefined;
+}
+
+const VacancyHelp: React.FC<VacancyHelpProps> = ({ rentalIncome, vacancy }) => {
+  if (!rentalIncome || !vacancy || vacancy === 0) {
+    return null;
+  }
+
+  const vacancyNominal = getVacancyNominal(rentalIncome, vacancy);
+  const netMonthlyRevenue = getNetMonthlyRevenue(rentalIncome, vacancy);
+
+  return (
+    <>
+      <div>Vacancy: {formatCurrency(vacancyNominal)} / month</div>
+      <div>Adjusted Rental Income: {formatCurrency(netMonthlyRevenue)}</div>
+    </>
+  );
+};
+
+interface Assumption {
+  id: number;
+  appreciation: number | undefined;
+  closing: number | undefined;
+  inflation: number | undefined;
+  vacancy: number | undefined;
+  tax: number | undefined;
+  propertyInsurance: number | undefined;
+  management: number | undefined;
+  maintenance: number | undefined;
+  utilities: number | undefined;
+  hoa: number | undefined;
+  downPercent: number | undefined;
+}
+
+interface FullHouse extends House {
+  rentalIncome: number | undefined;
+  assumption: Assumption;
+}
+
+const ASSUMPTION_FRAGMENT = gql`
+  fragment Assumption on assumptions {
+    id
+    appreciation
+    closing
+    inflation
+    vacancy
+    tax
+    propertyInsurance
+    management
+    maintenance
+    utilities
+    hoa
+    downPercent
+  }
+`;
+
+const getSum = (nums: Array<number | undefined>): number =>
+  nums.reduce((acc = 0, curr = 0) => acc + curr, 0) as number;
+
+export const GET_HOUSE_BY_ID = gql`
+  query GetHouseById($id: Int!) {
+    houses_by_pk(id: $id) {
+      ...House
+      rentalIncome
+      assumption {
+        ...Assumption
+      }
+    }
+  }
+  ${HOUSE_FRAGMENT}
+  ${ASSUMPTION_FRAGMENT}
+`;
+
+const UPDATE_HOUSE = gql`
+  mutation UpdateHouse($id: Int!, $_set: houses_set_input!) {
+    update_houses_by_pk(pk_columns: { id: $id }, _set: $_set) {
+      id
+      price
+      rentalIncome
+    }
+  }
+`;
+
+const ADD_HOUSE_ASSUMPTIONS = gql`
+  mutation AddHouseAssumptions($assumptions: assumptions_insert_input!) {
+    insert_assumptions_one(object: $assumptions) {
+      ...Assumption
+    }
+  }
+  ${ASSUMPTION_FRAGMENT}
+`;
+
+const UPDATE_HOUSE_ASSUMPTIONS = gql`
+  mutation UpdateHouseAssumptions($id: Int!, $_set: assumptions_set_input!) {
+    update_assumptions_by_pk(pk_columns: { id: $id }, _set: $_set) {
+      ...Assumption
+    }
+  }
+  ${ASSUMPTION_FRAGMENT}
+`;

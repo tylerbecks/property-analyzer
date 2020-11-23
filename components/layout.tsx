@@ -22,6 +22,7 @@ const MyLayout: React.FC = ({ children }) => (
             padding: 24,
             margin: 0,
             minHeight: 280,
+            overflowY: 'scroll',
           }}
         >
           {children}
