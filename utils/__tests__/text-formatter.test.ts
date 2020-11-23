@@ -11,3 +11,7 @@ test('it formats 1 thousand with 1 comma', () => {
 test('it formats 1 million with 1 comma', () => {
   expect(formatCurrency('1234567')).toBe('$1,234,567');
 });
+
+test('it rounds number to hundrendth decimal place', () => {
+  expect(formatCurrency('0.1292345')).toBe('$0.13');
+});
