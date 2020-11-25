@@ -5,6 +5,8 @@ import { Col, Collapse, Form, Row, Statistic, Typography } from 'antd';
 import { useSession } from 'next-auth/client';
 import { useRouter } from 'next/router';
 
+import BuyVsRentChart from '../../components/buy-vs-rent-chart';
+// import BuyVsRentChart from '../../components/buy-vs-rent-chart';
 import ErrorScreen from '../../components/error-screen';
 import InputCurrency from '../../components/input-currency';
 import InputPercent from '../../components/input-percent';
@@ -12,6 +14,7 @@ import LoadingScreen from '../../components/loading-screen';
 import withUserAndApollo from '../../components/with-user-and-apollo';
 import { HOUSE_FRAGMENT } from '../../fragments/house';
 import { House } from '../../types/house';
+import { round } from '../../utils/num-helpers';
 import { formatCurrency } from '../../utils/text-formatter';
 
 const { Panel } = Collapse;
@@ -22,20 +25,20 @@ const inputNumberCss = css`
   width: 50%;
 `;
 
-const getVacancyNominal = (rentalIncome: number | undefined, vacancyRate = 0) => {
+const getVacancyAmount = (rentalIncome: number | undefined, vacancyRate = 0) => {
   if (!rentalIncome) {
     return 0;
   }
 
-  const vacancyNominal = rentalIncome * (vacancyRate / 100);
-  return Math.round(vacancyNominal * 100) / 100;
+  const vacancyAmount = rentalIncome * (vacancyRate / 100);
+  return round(vacancyAmount);
 };
 
 export const getNetMonthlyRevenue = (rentalIncome: number | undefined, vacancyRate = 0): number => {
   if (!rentalIncome) return 0;
 
-  const vacancyNominal = getVacancyNominal(rentalIncome, vacancyRate);
-  return rentalIncome - vacancyNominal;
+  const vacancyAmount = getVacancyAmount(rentalIncome, vacancyRate);
+  return rentalIncome - vacancyAmount;
 };
 
 const HousePage: React.FC = () => {
@@ -141,11 +144,11 @@ const HousePage: React.FC = () => {
     }
   };
 
-  const monthlyTaxesNominal = house.assumption?.tax
+  const monthlyTaxesAmount = house.assumption?.tax
     ? (house.price * (house.assumption.tax / 100)) / 12
     : 0;
   const monthlyOperatingCosts = getSum([
-    monthlyTaxesNominal,
+    monthlyTaxesAmount,
     house.assumption?.propertyInsurance,
     house.assumption?.management,
     house.assumption?.maintenance,
@@ -156,6 +159,7 @@ const HousePage: React.FC = () => {
   const netMonthlyOperatingIncome = netMonthlyRevenue - monthlyOperatingCosts;
   const netOperatingIncome = netMonthlyOperatingIncome * 12;
   const capRate = house.rentalIncome ? (netOperatingIncome / house.price) * 100 : null;
+  const downPayment = ((house.assumption?.downPercent || 0) / 100) * house.price;
 
   return (
     <Row>
@@ -285,7 +289,7 @@ const HousePage: React.FC = () => {
                 label="Tax Rate"
                 rules={[{ type: 'number', min: 0 }]}
                 initialValue={house.assumption?.tax || 0}
-                help={house.assumption?.tax && `${formatCurrency(monthlyTaxesNominal)} / month`}
+                help={house.assumption?.tax && `${formatCurrency(monthlyTaxesAmount)} / month`}
               >
                 <InputPercent
                   css={inputNumberCss}
@@ -377,6 +381,36 @@ const HousePage: React.FC = () => {
         ) : (
           <Paragraph>Please Enter rental income to see the cap rate</Paragraph>
         )}
+
+        {house.assumption && (
+          <>
+            <BuyVsRentChart
+              downPayment={downPayment}
+              annualMarketRate={0.07}
+              annualInterestRate={0.0275}
+              loanTermYears={30}
+              purchasePrice={house.price}
+              insurance={house.assumption.propertyInsurance || 0}
+              mortgageTotal={house.price - downPayment}
+              operatingExpenses={monthlyOperatingCosts}
+              propertyTaxRate={(house.assumption.tax || 0) / 100}
+              inflationRate={(house.assumption.inflation || 0) / 100}
+              appreciationRate={(house.assumption.appreciation || 0) / 100}
+              netMonthlyRentalIncome={house.rentalIncome || 0}
+              marginalTaxRate={0.32}
+            />
+
+            <p>This chart assumes the following:</p>
+            <ul>
+              <li>Interest Rate: 2.75%</li>
+              <li>Loan Term: 30 years</li>
+              <li>Marginal Income Tax Rate: 32%</li>
+              <li>
+                Market Rate of Return (used to calculate your net worth growth while renting): 7%
+              </li>
+            </ul>
+          </>
+        )}
       </Col>
     </Row>
   );
@@ -394,12 +428,12 @@ const VacancyHelp: React.FC<VacancyHelpProps> = ({ rentalIncome, vacancy }) => {
     return null;
   }
 
-  const vacancyNominal = getVacancyNominal(rentalIncome, vacancy);
+  const vacancyAmount = getVacancyAmount(rentalIncome, vacancy);
   const netMonthlyRevenue = getNetMonthlyRevenue(rentalIncome, vacancy);
 
   return (
     <>
-      <div>Vacancy: {formatCurrency(vacancyNominal)} / month</div>
+      <div>Vacancy: {formatCurrency(vacancyAmount)} / month</div>
       <div>Adjusted Rental Income: {formatCurrency(netMonthlyRevenue)}</div>
     </>
   );
