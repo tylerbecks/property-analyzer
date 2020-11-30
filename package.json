@@ -12,9 +12,12 @@
   "dependencies": {
     "@apollo/client": "^3.2.7",
     "@emotion/core": "^10.0.35",
+    "@types/chart.js": "^2.9.28",
     "@types/faker": "^5.1.4",
     "@types/jsonwebtoken": "^8.5.0",
     "antd": "^4.7.0",
+    "chart.js": "^2.9.4",
+    "date-fns": "^2.16.1",
     "faker": "^5.1.0",
     "graphql": "^15.3.0",
     "jsonwebtoken": "^8.5.1",
