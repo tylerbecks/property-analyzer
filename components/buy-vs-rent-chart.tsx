@@ -125,7 +125,7 @@ const BuyVsRentChart: React.FC<Props> = ({
             intersect: false,
             callbacks: {
               label: (tooltipItem: ChartTooltipItem, data: ChartData) => {
-                if (!data.datasets || !tooltipItem.datasetIndex) {
+                if (data.datasets === undefined || tooltipItem.datasetIndex === undefined) {
                   return '';
                 }
 
