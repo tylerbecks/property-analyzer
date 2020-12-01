@@ -11,7 +11,6 @@ export interface UnsavedHouse {
   type: string | undefined;
   url: string | undefined;
   zip: string;
-  __typename: 'houses';
 }
 
 export interface House extends UnsavedHouse {
