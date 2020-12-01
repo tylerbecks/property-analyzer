@@ -6,7 +6,6 @@ import { useSession } from 'next-auth/client';
 import { useRouter } from 'next/router';
 
 import BuyVsRentChart from '../../components/buy-vs-rent-chart';
-// import BuyVsRentChart from '../../components/buy-vs-rent-chart';
 import ErrorScreen from '../../components/error-screen';
 import InputCurrency from '../../components/input-currency';
 import InputPercent from '../../components/input-percent';
@@ -18,7 +17,6 @@ import { round } from '../../utils/num-helpers';
 import { formatCurrency } from '../../utils/text-formatter';
 
 const { Panel } = Collapse;
-
 const { Title, Paragraph, Text } = Typography;
 
 const inputNumberCss = css`
@@ -41,13 +39,14 @@ export const getNetMonthlyRevenue = (rentalIncome: number | undefined, vacancyRa
   return rentalIncome - vacancyAmount;
 };
 
-const HousePage: React.FC = () => {
+export const HousePage: React.FC = () => {
   const router = useRouter();
   const { propertyId } = router.query;
   const [session] = useSession();
-
   const { loading, error, data } = useQuery(GET_HOUSE_BY_ID, {
-    variables: { id: propertyId },
+    variables: {
+      id: propertyId,
+    },
   });
 
   const [updateHouse] = useMutation(UPDATE_HOUSE);
@@ -158,7 +157,9 @@ const HousePage: React.FC = () => {
   const netMonthlyRevenue = getNetMonthlyRevenue(house.rentalIncome, house.assumption?.vacancy);
   const netMonthlyOperatingIncome = netMonthlyRevenue - monthlyOperatingCosts;
   const netOperatingIncome = netMonthlyOperatingIncome * 12;
-  const capRate = house.rentalIncome ? (netOperatingIncome / house.price) * 100 : null;
+
+  const capRate =
+    house.rentalIncome && house.price > 0 ? (netOperatingIncome / house.price) * 100 : null;
   const downPayment = ((house.assumption?.downPercent || 0) / 100) * house.price;
 
   return (
@@ -379,7 +380,7 @@ const HousePage: React.FC = () => {
             formatter={(value) => `${value}%`}
           />
         ) : (
-          <Paragraph>Please Enter rental income to see the cap rate</Paragraph>
+          <Paragraph>Please Enter rental income and purchase price to see the cap rate</Paragraph>
         )}
 
         {house.assumption && (
@@ -396,7 +397,7 @@ const HousePage: React.FC = () => {
               propertyTaxRate={(house.assumption.tax || 0) / 100}
               inflationRate={(house.assumption.inflation || 0) / 100}
               appreciationRate={(house.assumption.appreciation || 0) / 100}
-              netMonthlyRentalIncome={house.rentalIncome || 0}
+              netMonthlyRentalIncome={netMonthlyRevenue}
               marginalTaxRate={0.32}
             />
 
@@ -454,25 +455,25 @@ interface Assumption {
   downPercent: number | undefined;
 }
 
-interface FullHouse extends House {
+export interface FullHouse extends House {
   rentalIncome: number | undefined;
   assumption: Assumption;
 }
 
 const ASSUMPTION_FRAGMENT = gql`
   fragment Assumption on assumptions {
-    id
     appreciation
     closing
-    inflation
-    vacancy
-    tax
-    propertyInsurance
-    management
-    maintenance
-    utilities
-    hoa
     downPercent
+    hoa
+    id
+    inflation
+    maintenance
+    management
+    propertyInsurance
+    tax
+    utilities
+    vacancy
   }
 `;
 
@@ -493,7 +494,7 @@ export const GET_HOUSE_BY_ID = gql`
   ${ASSUMPTION_FRAGMENT}
 `;
 
-const UPDATE_HOUSE = gql`
+export const UPDATE_HOUSE = gql`
   mutation UpdateHouse($id: Int!, $_set: houses_set_input!) {
     update_houses_by_pk(pk_columns: { id: $id }, _set: $_set) {
       id
@@ -503,7 +504,7 @@ const UPDATE_HOUSE = gql`
   }
 `;
 
-const ADD_HOUSE_ASSUMPTIONS = gql`
+export const ADD_HOUSE_ASSUMPTIONS = gql`
   mutation AddHouseAssumptions($assumptions: assumptions_insert_input!) {
     insert_assumptions_one(object: $assumptions) {
       ...Assumption
@@ -512,7 +513,7 @@ const ADD_HOUSE_ASSUMPTIONS = gql`
   ${ASSUMPTION_FRAGMENT}
 `;
 
-const UPDATE_HOUSE_ASSUMPTIONS = gql`
+export const UPDATE_HOUSE_ASSUMPTIONS = gql`
   mutation UpdateHouseAssumptions($id: Int!, $_set: assumptions_set_input!) {
     update_assumptions_by_pk(pk_columns: { id: $id }, _set: $_set) {
       ...Assumption
