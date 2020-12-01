@@ -7,5 +7,9 @@ export const formatCurrency = (value: string | number): string => {
 
   value = round(value);
 
+  if (Math.round(value) !== value) {
+    value = value.toFixed(2);
+  }
+
   return `$${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 };
