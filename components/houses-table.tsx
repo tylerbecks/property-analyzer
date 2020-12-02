@@ -140,7 +140,7 @@ const HousesTable: React.FC<Props> = ({ houses }) => {
       editable: true,
       required: true,
       title: 'Price',
-      render: (price: number) => formatCurrency(String(price)),
+      render: (price: number) => formatCurrency(price),
     },
     {
       dataIndex: 'size',
