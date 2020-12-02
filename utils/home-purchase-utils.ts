@@ -1,4 +1,7 @@
-interface BuyDataPoint {
+import { add } from 'date-fns';
+
+export interface BuyDataPoint {
+  date: Date;
   homeValue: number;
   taxes: number;
   insurance: number;
@@ -34,6 +37,7 @@ export const getBuyWaterfall = (
   const downPayment = initialHomeValue - initialMortgageTotal;
   const netWorthPoints = [
     {
+      date: new Date(),
       cashFlow: initialNetMonthlyRentalIncome - initialPITI - initialOperatingExpenses,
       equity: downPayment,
       homeValue: initialHomeValue,
@@ -52,6 +56,7 @@ export const getBuyWaterfall = (
 
   for (let i = netWorthPoints.length; i < loanTermMonths; i++) {
     const {
+      date,
       homeValue,
       insurance,
       netRentalIncome,
@@ -74,6 +79,7 @@ export const getBuyWaterfall = (
     const newInterestDeduction = newInterestAmount * marginalIncomeTaxRate;
 
     netWorthPoints.push({
+      date: add(date, { months: 1 }),
       cashFlow: newNetRentalIncome - newPITI - newOperatingExpenses,
       equity: newEquity,
       homeValue: newHomeValue,

@@ -10,9 +10,11 @@ import ErrorScreen from '../../components/error-screen';
 import InputCurrency from '../../components/input-currency';
 import InputPercent from '../../components/input-percent';
 import LoadingScreen from '../../components/loading-screen';
+import WaterfallTable from '../../components/waterfall-table';
 import withUserAndApollo from '../../components/with-user-and-apollo';
 import { HOUSE_FRAGMENT } from '../../fragments/house';
 import { House } from '../../types/house';
+import { getBuyWaterfall } from '../../utils/home-purchase-utils';
 import { round } from '../../utils/num-helpers';
 import { formatCurrency } from '../../utils/text-formatter';
 
@@ -22,6 +24,11 @@ const { Title, Paragraph, Text } = Typography;
 const inputNumberCss = css`
   width: 50%;
 `;
+
+// this is necessary since percents are stored as integers in the backend
+const toPercent = (rate: number | undefined) => {
+  return (rate || 0) / 100;
+};
 
 const getVacancyAmount = (rentalIncome: number | undefined, vacancyRate = 0) => {
   if (!rentalIncome) {
@@ -37,6 +44,17 @@ export const getNetMonthlyRevenue = (rentalIncome: number | undefined, vacancyRa
 
   const vacancyAmount = getVacancyAmount(rentalIncome, vacancyRate);
   return rentalIncome - vacancyAmount;
+};
+
+const withNumVal = (func: (key: string, value: number) => void) => {
+  return (key: string, value: string) => {
+    const valueNum = Number(value);
+    if (Number.isNaN(valueNum)) {
+      return;
+    }
+
+    func(key, valueNum);
+  };
 };
 
 export const HousePage: React.FC = () => {
@@ -61,17 +79,6 @@ export const HousePage: React.FC = () => {
   }
 
   const { houses_by_pk: house }: { houses_by_pk: FullHouse } = data;
-
-  const withNumVal = (func: (key: string, value: number) => void) => {
-    return (key: string, value: string) => {
-      const valueNum = Number(value);
-      if (Number.isNaN(valueNum)) {
-        return;
-      }
-
-      func(key, valueNum);
-    };
-  };
 
   const changeHouse = (key: string, value: unknown) => {
     updateHouse({
@@ -160,260 +167,267 @@ export const HousePage: React.FC = () => {
 
   const capRate =
     house.rentalIncome && house.price > 0 ? (netOperatingIncome / house.price) * 100 : null;
-  const downPayment = ((house.assumption?.downPercent || 0) / 100) * house.price;
+  const downPercent = toPercent(house.assumption?.downPercent);
+  const downPayment = downPercent * house.price;
+  const mortgageTotal = house.price - downPayment;
+  const ANNUAL_INTEREST_RATE = 0.0275;
+  const LOAN_TERM_MONTHS = 30 * 12;
+  const MARGINAL_TAX_RATE = 0.32;
+
+  const buyRows = getBuyWaterfall(
+    house.price,
+    house.assumption?.propertyInsurance || 0,
+    mortgageTotal,
+    monthlyOperatingCosts,
+    toPercent(house.assumption?.tax),
+    ANNUAL_INTEREST_RATE,
+    toPercent(house.assumption?.inflation),
+    toPercent(house.assumption?.appreciation),
+    LOAN_TERM_MONTHS,
+    netMonthlyRevenue,
+    MARGINAL_TAX_RATE
+  );
 
   return (
-    <Row>
-      <Col span={12}>
-        <Title level={2}>{house.name}</Title>
-        <Paragraph>
-          <div>
-            <Text>{house.address1}</Text>
-          </div>
-          {house.address2 && (
+    <>
+      <Row>
+        <Col span={12}>
+          <Title level={2}>{house.name}</Title>
+          <Paragraph>
             <div>
-              <Text>{house.address2}</Text>
+              <Text>{house.address1}</Text>
             </div>
-          )}
-          <div>
-            <Text>{`${house.city}, ${house.state} ${house.zip}`}</Text>
-          </div>
-        </Paragraph>
+            {house.address2 && (
+              <div>
+                <Text>{house.address2}</Text>
+              </div>
+            )}
+            <div>
+              <Text>{`${house.city}, ${house.state} ${house.zip}`}</Text>
+            </div>
+          </Paragraph>
 
-        <Form layout="vertical">
-          <Form.Item
-            name="price"
-            label="Purchase Price"
-            rules={[{ type: 'number', min: 1 }]}
-            initialValue={house.price}
-          >
-            <InputCurrency
-              css={inputNumberCss}
-              onChange={(value: string) => {
-                withNumVal(changeHouse)('price', value);
-              }}
-            />
-          </Form.Item>
-          <Form.Item
-            name="rentalIncome"
-            label="Monthly Rental Income"
-            rules={[{ type: 'number', min: 0 }]}
-            initialValue={house.rentalIncome}
-          >
-            <InputCurrency
-              css={inputNumberCss}
-              onChange={(value: string) => {
-                withNumVal(changeHouse)('rentalIncome', value);
-              }}
-            />
-          </Form.Item>
-          <Form.Item
-            name="vacancy"
-            label="Vacancy Rate"
-            rules={[{ type: 'number', min: 0 }]}
-            initialValue={house.assumption?.vacancy || 0}
-            help={
-              <VacancyHelp vacancy={house.assumption?.vacancy} rentalIncome={house.rentalIncome} />
-            }
-          >
-            <InputPercent
-              css={inputNumberCss}
-              onChange={(value: string) => {
-                withNumVal(changeAssumption)('vacancy', value);
-              }}
-            />
-          </Form.Item>
-          <Form.Item
-            name="downPercent"
-            label="Down Payment"
-            rules={[{ type: 'number', min: 0 }]}
-            initialValue={house.assumption?.downPercent || 0}
-            help={
-              house.assumption?.downPercent &&
-              formatCurrency(house.price * (house.assumption.downPercent / 100))
-            }
-          >
-            <InputPercent
-              css={inputNumberCss}
-              onChange={(value: string) => {
-                withNumVal(changeAssumption)('downPercent', value);
-              }}
-            />
-          </Form.Item>
-          <Form.Item
-            name="closing"
-            label="Closing Costs"
-            rules={[{ type: 'number', min: 0 }]}
-            initialValue={house.assumption?.closing || 0}
-          >
-            <InputCurrency
-              css={inputNumberCss}
-              onChange={(value: string) => {
-                withNumVal(changeAssumption)('closing', value);
-              }}
-            />
-          </Form.Item>
-          <Form.Item
-            name="appreciation"
-            label="Appreciation Rate"
-            rules={[{ type: 'number', min: 0 }]}
-            initialValue={house.assumption?.appreciation || 0}
-          >
-            <InputPercent
-              css={inputNumberCss}
-              onChange={(value: string) => {
-                withNumVal(changeAssumption)('appreciation', value);
-              }}
-            />
-          </Form.Item>
-          <Form.Item
-            name="inflation"
-            label="Inflation Rate"
-            rules={[{ type: 'number', min: 0 }]}
-            initialValue={house.assumption?.inflation || 0}
-          >
-            <InputPercent
-              css={inputNumberCss}
-              onChange={(value: string) => {
-                withNumVal(changeAssumption)('inflation', value);
-              }}
-            />
-          </Form.Item>
-
-          <Collapse ghost>
-            <Panel
-              header={`Monthly Operating Expenses: ${formatCurrency(monthlyOperatingCosts)}`}
-              key="1"
+          <Form layout="vertical">
+            <Form.Item
+              name="price"
+              label="Purchase Price"
+              rules={[{ type: 'number', min: 1 }]}
+              initialValue={house.price}
             >
-              <Form.Item
-                name="tax"
-                label="Tax Rate"
-                rules={[{ type: 'number', min: 0 }]}
-                initialValue={house.assumption?.tax || 0}
-                help={house.assumption?.tax && `${formatCurrency(monthlyTaxesAmount)} / month`}
-              >
-                <InputPercent
-                  css={inputNumberCss}
-                  onChange={(value: string) => {
-                    withNumVal(changeAssumption)('tax', value);
-                  }}
+              <InputCurrency
+                css={inputNumberCss}
+                onChange={(value: string) => {
+                  withNumVal(changeHouse)('price', value);
+                }}
+              />
+            </Form.Item>
+            <Form.Item
+              name="rentalIncome"
+              label="Monthly Rental Income"
+              rules={[{ type: 'number', min: 0 }]}
+              initialValue={house.rentalIncome}
+            >
+              <InputCurrency
+                css={inputNumberCss}
+                onChange={(value: string) => {
+                  withNumVal(changeHouse)('rentalIncome', value);
+                }}
+              />
+            </Form.Item>
+            <Form.Item
+              name="vacancy"
+              label="Vacancy Rate"
+              rules={[{ type: 'number', min: 0 }]}
+              initialValue={house.assumption?.vacancy || 0}
+              help={
+                <VacancyHelp
+                  vacancy={house.assumption?.vacancy}
+                  rentalIncome={house.rentalIncome}
                 />
-              </Form.Item>
+              }
+            >
+              <InputPercent
+                css={inputNumberCss}
+                onChange={(value: string) => {
+                  withNumVal(changeAssumption)('vacancy', value);
+                }}
+              />
+            </Form.Item>
+            <Form.Item
+              name="downPercent"
+              label="Down Payment"
+              rules={[{ type: 'number', min: 0 }]}
+              initialValue={house.assumption?.downPercent || 0}
+              help={
+                house.assumption?.downPercent &&
+                formatCurrency(house.price * (house.assumption.downPercent / 100))
+              }
+            >
+              <InputPercent
+                css={inputNumberCss}
+                onChange={(value: string) => {
+                  withNumVal(changeAssumption)('downPercent', value);
+                }}
+              />
+            </Form.Item>
+            <Form.Item
+              name="closing"
+              label="Closing Costs"
+              rules={[{ type: 'number', min: 0 }]}
+              initialValue={house.assumption?.closing || 0}
+            >
+              <InputCurrency
+                css={inputNumberCss}
+                onChange={(value: string) => {
+                  withNumVal(changeAssumption)('closing', value);
+                }}
+              />
+            </Form.Item>
+            <Form.Item
+              name="appreciation"
+              label="Appreciation Rate"
+              rules={[{ type: 'number', min: 0 }]}
+              initialValue={house.assumption?.appreciation || 0}
+            >
+              <InputPercent
+                css={inputNumberCss}
+                onChange={(value: string) => {
+                  withNumVal(changeAssumption)('appreciation', value);
+                }}
+              />
+            </Form.Item>
+            <Form.Item
+              name="inflation"
+              label="Inflation Rate"
+              rules={[{ type: 'number', min: 0 }]}
+              initialValue={house.assumption?.inflation || 0}
+            >
+              <InputPercent
+                css={inputNumberCss}
+                onChange={(value: string) => {
+                  withNumVal(changeAssumption)('inflation', value);
+                }}
+              />
+            </Form.Item>
 
-              <Form.Item
-                name="propertyInsurance"
-                label="Property Insurance"
-                rules={[{ type: 'number', min: 0 }]}
-                initialValue={house.assumption?.propertyInsurance || 0}
+            <Collapse ghost>
+              <Panel
+                header={`Monthly Operating Expenses: ${formatCurrency(monthlyOperatingCosts)}`}
+                key="1"
               >
-                <InputCurrency
-                  css={inputNumberCss}
-                  onChange={(value: string) => {
-                    withNumVal(changeAssumption)('propertyInsurance', value);
-                  }}
-                />
-              </Form.Item>
-              <Form.Item
-                name="management"
-                label="Management Fee"
-                rules={[{ type: 'number', min: 0 }]}
-                initialValue={house.assumption?.management || 0}
-              >
-                <InputCurrency
-                  css={inputNumberCss}
-                  onChange={(value: string) => {
-                    withNumVal(changeAssumption)('management', value);
-                  }}
-                />
-              </Form.Item>
-              <Form.Item
-                name="maintenance"
-                label="Maintenance Fee"
-                rules={[{ type: 'number', min: 0 }]}
-                initialValue={house.assumption?.maintenance || 0}
-              >
-                <InputCurrency
-                  css={inputNumberCss}
-                  onChange={(value: string) => {
-                    withNumVal(changeAssumption)('maintenance', value);
-                  }}
-                />
-              </Form.Item>
-              <Form.Item
-                name="utilities"
-                label="Utilities"
-                rules={[{ type: 'number', min: 0 }]}
-                initialValue={house.assumption?.utilities || 0}
-              >
-                <InputCurrency
-                  css={inputNumberCss}
-                  onChange={(value: string) => {
-                    withNumVal(changeAssumption)('utilities', value);
-                  }}
-                />
-              </Form.Item>
-              <Form.Item
-                name="hoa"
-                label="HOA Fee"
-                rules={[{ type: 'number', min: 0 }]}
-                initialValue={house.assumption?.hoa || 0}
-              >
-                <InputCurrency
-                  css={inputNumberCss}
-                  onChange={(value: string) => {
-                    withNumVal(changeAssumption)('hoa', value);
-                  }}
-                />
-              </Form.Item>
-            </Panel>
-          </Collapse>
-        </Form>
-      </Col>
+                <Form.Item
+                  name="tax"
+                  label="Tax Rate"
+                  rules={[{ type: 'number', min: 0 }]}
+                  initialValue={house.assumption?.tax || 0}
+                  help={house.assumption?.tax && `${formatCurrency(monthlyTaxesAmount)} / month`}
+                >
+                  <InputPercent
+                    css={inputNumberCss}
+                    onChange={(value: string) => {
+                      withNumVal(changeAssumption)('tax', value);
+                    }}
+                  />
+                </Form.Item>
 
-      <Col span={12}>
-        <Title level={3}>Stats</Title>
-        {capRate ? (
-          <Statistic
-            title="Cap Rate"
-            value={capRate.toFixed(2)}
-            precision={2}
-            formatter={(value) => `${value}%`}
-          />
-        ) : (
-          <Paragraph>Please Enter rental income and purchase price to see the cap rate</Paragraph>
-        )}
+                <Form.Item
+                  name="propertyInsurance"
+                  label="Property Insurance"
+                  rules={[{ type: 'number', min: 0 }]}
+                  initialValue={house.assumption?.propertyInsurance || 0}
+                >
+                  <InputCurrency
+                    css={inputNumberCss}
+                    onChange={(value: string) => {
+                      withNumVal(changeAssumption)('propertyInsurance', value);
+                    }}
+                  />
+                </Form.Item>
+                <Form.Item
+                  name="management"
+                  label="Management Fee"
+                  rules={[{ type: 'number', min: 0 }]}
+                  initialValue={house.assumption?.management || 0}
+                >
+                  <InputCurrency
+                    css={inputNumberCss}
+                    onChange={(value: string) => {
+                      withNumVal(changeAssumption)('management', value);
+                    }}
+                  />
+                </Form.Item>
+                <Form.Item
+                  name="maintenance"
+                  label="Maintenance Fee"
+                  rules={[{ type: 'number', min: 0 }]}
+                  initialValue={house.assumption?.maintenance || 0}
+                >
+                  <InputCurrency
+                    css={inputNumberCss}
+                    onChange={(value: string) => {
+                      withNumVal(changeAssumption)('maintenance', value);
+                    }}
+                  />
+                </Form.Item>
+                <Form.Item
+                  name="utilities"
+                  label="Utilities"
+                  rules={[{ type: 'number', min: 0 }]}
+                  initialValue={house.assumption?.utilities || 0}
+                >
+                  <InputCurrency
+                    css={inputNumberCss}
+                    onChange={(value: string) => {
+                      withNumVal(changeAssumption)('utilities', value);
+                    }}
+                  />
+                </Form.Item>
+                <Form.Item
+                  name="hoa"
+                  label="HOA Fee"
+                  rules={[{ type: 'number', min: 0 }]}
+                  initialValue={house.assumption?.hoa || 0}
+                >
+                  <InputCurrency
+                    css={inputNumberCss}
+                    onChange={(value: string) => {
+                      withNumVal(changeAssumption)('hoa', value);
+                    }}
+                  />
+                </Form.Item>
+              </Panel>
+            </Collapse>
+          </Form>
+        </Col>
 
-        {house.assumption && (
-          <>
-            <BuyVsRentChart
-              downPayment={downPayment}
-              annualMarketRate={0.07}
-              annualInterestRate={0.0275}
-              loanTermYears={30}
-              purchasePrice={house.price}
-              insurance={house.assumption.propertyInsurance || 0}
-              mortgageTotal={house.price - downPayment}
-              operatingExpenses={monthlyOperatingCosts}
-              propertyTaxRate={(house.assumption.tax || 0) / 100}
-              inflationRate={(house.assumption.inflation || 0) / 100}
-              appreciationRate={(house.assumption.appreciation || 0) / 100}
-              netMonthlyRentalIncome={netMonthlyRevenue}
-              marginalTaxRate={0.32}
+        <Col span={12}>
+          <Title level={3}>Stats</Title>
+          {capRate ? (
+            <Statistic
+              title="Cap Rate"
+              value={capRate.toFixed(2)}
+              precision={2}
+              formatter={(value) => `${value}%`}
             />
+          ) : (
+            <Paragraph>Please Enter rental income and purchase price to see the cap rate</Paragraph>
+          )}
 
-            <p>This chart assumes the following:</p>
-            <ul>
-              <li>Interest Rate: 2.75%</li>
-              <li>Loan Term: 30 years</li>
-              <li>Marginal Income Tax Rate: 32%</li>
-              <li>
-                Market Rate of Return (used to calculate your net worth growth while renting): 7%
-              </li>
-            </ul>
-          </>
-        )}
-      </Col>
-    </Row>
+          {house.assumption && (
+            <BuyVsRentChart
+              buyPoints={buyRows.map(({ netWorth }) => netWorth)}
+              annualMarketRate={0.07}
+              downPayment={downPayment}
+              loanTermYears={30}
+            />
+          )}
+        </Col>
+      </Row>
+
+      <Row>
+        <WaterfallTable rows={buyRows} />
+      </Row>
+    </>
   );
 };
 

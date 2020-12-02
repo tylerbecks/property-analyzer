@@ -2,7 +2,6 @@ import Chart, { ChartData, ChartTooltipItem } from 'chart.js';
 import { add, format, startOfMonth } from 'date-fns';
 import { useEffect, useRef } from 'react';
 
-import { getBuyWaterfall } from '../utils/home-purchase-utils';
 import { formatCurrency } from '../utils/text-formatter';
 
 const CHART_RED = 'rgb(255, 99, 132)';
@@ -39,55 +38,22 @@ const getLabels = (months: number) => {
 };
 
 interface Props {
-  annualInterestRate: number;
-  annualMarketRate: number;
+  buyPoints: number[];
   downPayment: number;
+  annualMarketRate: number;
   loanTermYears: number;
-  purchasePrice: number;
-  insurance: number;
-  mortgageTotal: number;
-  operatingExpenses: number;
-  propertyTaxRate: number;
-  inflationRate: number;
-  appreciationRate: number;
-  netMonthlyRentalIncome: number;
-  marginalTaxRate: number;
 }
 
 const BuyVsRentChart: React.FC<Props> = ({
   downPayment,
   loanTermYears,
   annualMarketRate,
-  purchasePrice,
-  annualInterestRate,
-  insurance,
-  mortgageTotal,
-  operatingExpenses,
-  propertyTaxRate,
-  inflationRate,
-  appreciationRate,
-  netMonthlyRentalIncome,
-  marginalTaxRate,
+  buyPoints,
 }) => {
   const chartRef = useRef<HTMLCanvasElement>(null);
   const loanTermMonths = loanTermYears * MONTHS_IN_YEAR;
   const labels = getLabels(loanTermMonths);
   const rentPoints = getRentNetWorthDataPoints(downPayment, loanTermMonths, annualMarketRate);
-
-  const buyRows = getBuyWaterfall(
-    purchasePrice,
-    insurance,
-    mortgageTotal,
-    operatingExpenses,
-    propertyTaxRate,
-    annualInterestRate,
-    inflationRate,
-    appreciationRate,
-    loanTermMonths,
-    netMonthlyRentalIncome,
-    marginalTaxRate
-  );
-  const buyPoints = buyRows.map(({ netWorth }) => netWorth);
 
   useEffect(() => {
     if (chartRef?.current) {
@@ -170,7 +136,18 @@ const BuyVsRentChart: React.FC<Props> = ({
     }
   }, [labels, rentPoints, buyPoints]);
 
-  return <canvas id="buy-vs-rent-chart" ref={chartRef} aria-label="Buy versus Rent Chart" />;
+  return (
+    <div>
+      <canvas id="buy-vs-rent-chart" ref={chartRef} aria-label="Buy versus Rent Chart" />
+      <p>This chart assumes the following:</p>
+      <ul>
+        <li>Interest Rate: 2.75%</li>
+        <li>Loan Term: 30 years</li>
+        <li>Marginal Income Tax Rate: 32%</li>
+        <li>Market Rate of Return (used to calculate your net worth growth while renting): 7%</li>
+      </ul>
+    </div>
+  );
 };
 
 export default BuyVsRentChart;
