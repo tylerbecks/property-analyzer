@@ -1,11 +1,12 @@
 /** @jsx jsx */
 import { gql, StoreObject, useMutation, useQuery } from '@apollo/client';
 import { css, jsx } from '@emotion/core';
-import { Col, Collapse, Form, Row, Statistic, Typography } from 'antd';
+import { Col, Collapse, Form, Row, Typography } from 'antd';
 import { useSession } from 'next-auth/client';
 import { useRouter } from 'next/router';
 
 import BuyVsRentChart from '../../components/buy-vs-rent-chart';
+import CashflowPositiveDate from '../../components/cashflow-positive-date';
 import ErrorScreen from '../../components/error-screen';
 import InputCurrency from '../../components/input-currency';
 import InputPercent from '../../components/input-percent';
@@ -23,6 +24,12 @@ const { Title, Paragraph, Text } = Typography;
 
 const inputNumberCss = css`
   width: 50%;
+`;
+
+const statsDisplay = css`
+  display: flex;
+  justify-content: space-around;
+  text-align: center;
 `;
 
 // this is necessary since percents are stored as integers in the backend
@@ -401,26 +408,27 @@ export const HousePage: React.FC = () => {
         </Col>
 
         <Col span={12}>
-          <Title level={3}>Stats</Title>
-          {capRate ? (
-            <Statistic
-              title="Cap Rate"
-              value={capRate.toFixed(2)}
-              precision={2}
-              formatter={(value) => `${value}%`}
-            />
-          ) : (
-            <Paragraph>Please Enter rental income and purchase price to see the cap rate</Paragraph>
-          )}
+          <div css={statsDisplay}>
+            {capRate ? (
+              <div>
+                <Title level={5}>Cap Rate</Title>
+                <Paragraph>{`${capRate.toFixed(2)}%`}</Paragraph>
+              </div>
+            ) : (
+              <Paragraph>
+                Please Enter rental income and purchase price to see the cap rate
+              </Paragraph>
+            )}
 
-          {house.assumption && (
-            <BuyVsRentChart
-              buyPoints={buyRows.map(({ netWorth }) => netWorth)}
-              annualMarketRate={0.07}
-              downPayment={downPayment}
-              loanTermYears={30}
-            />
-          )}
+            <CashflowPositiveDate buyRows={buyRows} />
+          </div>
+
+          <BuyVsRentChart
+            buyPoints={buyRows.map(({ netWorth }) => netWorth)}
+            annualMarketRate={0.07}
+            downPayment={downPayment}
+            loanTermYears={30}
+          />
         </Col>
       </Row>
 
